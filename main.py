@@ -1,6 +1,7 @@
 #!/usr/bin/env python2
 
 import logging
+import traceback
 from handler import Handler
 import cmd
 
@@ -50,13 +51,13 @@ If type isn't supplied it's assumed to be artist."""
         else:
             t = 'artist'
             query = ' '.join(line)
-        self.handler.search(t, query)
-        self.handler.print_results()
+        if self.handler.search(t, query):
+            self.handler.print_results()
 
     def do_more(self, line):
         """more - show more search results"""
-        self.handler.more()
-        self.handler.print_results()
+        if self.handler.more():
+            self.handler.print_results()
 
     def do_clear(self, q):
         """clear: clear playlist"""
@@ -105,6 +106,17 @@ If type isn't supplied it's assumed to be artist."""
         else:
             print("Repeat: off")
 
+    def do_shell(self, query):
+        """exec(query)"""
+        try:
+            exec query
+        except Exception:
+            traceback.print_exc()
+
+    def do_playlists(self, query):
+        """playlists - show your playlists"""
+        self.handler.showPlaylists()
+
     def do_enqueue(self, query):
         """enqueue: add object to playlist:
     enqueue <spotify:track:song_id> - enqueue song
@@ -115,19 +127,20 @@ If type isn't supplied it's assumed to be artist."""
     enqueue <search query> - enqueue first 20 elements of a search query"""
 
         if query.find("spotify:track") == 0:
-            self.handler.getTracks("track", query)
+            ret = self.handler.getTracks("track", query)
         elif query.find("spotify:album") == 0:
-            self.handler.getTracks("album", query)
+            ret = self.handler.getTracks("album", query)
         elif query.find("spotify:artist") == 0:
-            self.handler.getTracks("artist", query)
+            ret = self.handler.getTracks("artist", query)
         elif query.find("similar:spotify:artist") == 0:
             query = ':'.join(query.split(':')[1:])
-            self.handler.getTracks("similar", query)
+            ret = self.handler.getTracks("similar", query)
         elif query.find("spotify:") == 0 and query.find(":playlist:") != -1:
-            self.handler.getTracks("playlist", query)
+            ret = self.handler.getTracks("playlist", query)
         else:
-            self.handler.getTracks("search", query)
+            ret = self.handler.getTracks("search", query)
 
-        self.handler.enqueueResults()
+        if ret:
+            self.handler.enqueueResults()
 
 Tylyfy().cmdloop()

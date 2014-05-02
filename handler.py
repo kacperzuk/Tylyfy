@@ -4,6 +4,16 @@ import threading
 import spotify
 import player
 
+def require_login(f):
+    def wrapper(*args):
+        if args[0].events.connected.is_set():
+            f(*args)
+            return True
+        else:
+            print("You must login first!")
+            return False
+    return wrapper
+
 class Events(object):
     def __init__(self):
         self.connected = threading.Event()
@@ -59,7 +69,13 @@ class Handler(object):
         config.tracefile = b'/tmp/tylyfy.trace.log'
         
         session = spotify.Session(config=config)
-        audio = spotify.AlsaSink(session)
+        try:
+            spotify.AlsaSink(session)
+        except:
+            try:
+                spotify.PortAudioSink(session)
+            except:
+                raise Exception("No pyAlsaAudio nor pyAudio found, bailing out...")
         self.loop = spotify.EventLoop(session)
         self.loop.start()
         session.on(spotify.SessionEvent.CONNECTION_STATE_UPDATED, self.events.connection_state_updated)
@@ -77,15 +93,20 @@ class Handler(object):
         return session
 
     def login(self, username, password):
-        session.login(username, password)
-        self.events.blob_updated.wait()
-        self.settings.set('spotify', 'username', username)
-        self.settings.set('spotify', 'blob', self.events.blob_data)
-        self.settings.sync()
+        self.spotify_session.login(username, password)
+        print("Logging in...")
+        if self.events.blob_updated.wait(8):
+            self.settings.set('spotify', 'username', username)
+            self.settings.set('spotify', 'blob', self.events.blob_data)
+            self.settings.sync()
+        else:
+            print("Login error")
 
+    @require_login
     def endOfTrack(self, session):
         self.player.next()
 
+    @require_login
     def playSong(self, song):
         track = self.spotify_session.get_track(song)
         track.load()
@@ -94,11 +115,13 @@ class Handler(object):
         self.player.next()
         self.player.play()
 
+    @require_login
     def search(self, t, query):
         self.last_search = self.spotify_session.search(query)
         self.last_search.load()
         self.last_search.type = t
 
+    @require_login
     def more(self):
         if self.last_search:
             t = self.last_search.type
@@ -106,6 +129,30 @@ class Handler(object):
             self.last_search.load()
             self.last_search.type = t
 
+    @require_login
+    def showPlaylists(self):
+        c = self.spotify_session.playlist_container
+        if not c.is_loaded:
+            c.load()
+        
+        in_folder = False
+        for item in c:
+            if isinstance(item, spotify.Playlist):
+                if item.description:
+                    name = "%s, %s" % (item.name, item.description)
+                else:
+                    name = item.name
+                if in_folder:
+                    print("|- %s" % name)
+                else:
+                    print(name)
+            elif item.type == spotify.PlaylistType.START_FOLDER:
+                in_folder = True
+                print("Folder: %s:" % item.name)
+            elif item.type == spotify.PlaylistType.END_FOLDER:
+                in_folder = False
+
+    @require_login
     def print_results(self):
         if self.last_search:
             t = self.last_search.type
@@ -137,16 +184,19 @@ class Handler(object):
                 raise ValueError("Wrong search type")
 
     def quit(self):
-        self.spotify_session.logout()
-        self.events.logged_out_event.wait()
+        if self.events.connected.is_set():
+            self.spotify_session.logout()
+            self.events.logged_out_event.wait()
         self.loop.stop()
 
+    @require_login
     def enqueueResults(self):
         if(self.results):
             self.player.enqueue(self.results)
         else:
             print("No results.")
 
+    @require_login
     def getTracks(self, t, query):
         self.results = []
         if t == "track":
@@ -187,12 +237,4 @@ class Handler(object):
 
         for track in self.results:
             track.load()
-
-    def test(self):
-        self.search = self.spotify_session.search(u'Amber Asylum Riviera')
-        self.search.load()
-        track = self.search.tracks[0]
-        track.load()
-        self.spotify_session.player.load(track)
-        self.spotify_session.player.play()
 
