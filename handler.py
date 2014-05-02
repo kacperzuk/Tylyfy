@@ -70,10 +70,10 @@ class Handler(object):
         
         session = spotify.Session(config=config)
         try:
-            spotify.AlsaSink(session)
+            spotify.PortAudioSink(session)
         except:
             try:
-                spotify.PortAudioSink(session)
+                spotify.AlsaSink(session)
             except:
                 raise Exception("No pyAlsaAudio nor pyAudio found, bailing out...")
         self.loop = spotify.EventLoop(session)
