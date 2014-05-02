@@ -1,0 +1,4 @@
+*.pyc
+/tmp/
+.*.swp
+spotify_appkey.key

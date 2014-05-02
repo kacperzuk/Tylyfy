@@ -1,0 +1,198 @@
+import settings
+import logging
+import threading
+import spotify
+import player
+
+class Events(object):
+    def __init__(self):
+        self.connected = threading.Event()
+        self.blob_updated = threading.Event()
+        self.blob_data = ""
+        self.logged_out_event = threading.Event()
+
+    def connection_state_updated(self, session):
+        if session.connection.state == spotify.ConnectionState.LOGGED_IN:
+            self.connected.set()
+            self.logged_out_event.clear()
+
+    def logged_out(self, session):
+        self.connected.clear()
+        self.logged_out_event.set()
+
+    def credentials_blob_updated(self, session, blob):
+        self.blob_data = blob
+        self.blob_updated.set()
+
+class Handler(object):
+    def __init__(self):
+        self.settings = settings.Settings()
+        self.logger = self.setupLogging()
+        self.events = Events()
+        self.spotify_session = self.setupSpotify()
+        self.player = player.Player(self.spotify_session.player)
+        self.results = None
+        self.last_search = None
+
+    def setupLogging(self):
+        levels = {'debug': logging.DEBUG,
+                  'info': logging.INFO,
+                  'warning': logging.WARNING,
+                  'error': logging.ERROR,
+                  'critical': logging.CRITICAL}
+
+        core_loglevel = self.settings.get('core', 'loglevel', 'warning')
+        spotify_loglevel = self.settings.get('spotify', 'loglevel', 'warning')
+
+        logging.basicConfig(level=levels[core_loglevel])
+        logging.getLogger('spotify').setLevel(levels[spotify_loglevel])
+        logger =  logging.getLogger(__name__)
+        logger.debug("Logging initialized")
+        return logger
+
+    def setupSpotify(self):
+        username = self.settings.get('spotify', 'username', None)
+        blob = self.settings.get('spotify', 'blob', None)
+
+        config = spotify.Config()
+        config.user_agent = 'Tylyfy - CLI Player'
+        config.tracefile = b'/tmp/tylyfy.trace.log'
+        
+        session = spotify.Session(config=config)
+        audio = spotify.AlsaSink(session)
+        self.loop = spotify.EventLoop(session)
+        self.loop.start()
+        session.on(spotify.SessionEvent.CONNECTION_STATE_UPDATED, self.events.connection_state_updated)
+        session.on(spotify.SessionEvent.CREDENTIALS_BLOB_UPDATED, self.events.credentials_blob_updated)
+        session.on(spotify.SessionEvent.LOGGED_OUT, self.events.logged_out)
+        session.on(spotify.SessionEvent.END_OF_TRACK, self.endOfTrack)
+
+        if username:
+            print("Logged in as: %s" % username)
+            session.login(username, blob=blob)
+            self.events.connected.wait()
+            self.logger.debug('Login and connection successful')
+        else:
+            print("Remember to login")
+        return session
+
+    def login(self, username, password):
+        session.login(username, password)
+        self.events.blob_updated.wait()
+        self.settings.set('spotify', 'username', username)
+        self.settings.set('spotify', 'blob', self.events.blob_data)
+        self.settings.sync()
+
+    def endOfTrack(self, session):
+        self.player.next()
+
+    def playSong(self, song):
+        track = self.spotify_session.get_track(song)
+        track.load()
+        self.player.clear()
+        self.player.enqueue(track)
+        self.player.next()
+        self.player.play()
+
+    def search(self, t, query):
+        self.last_search = self.spotify_session.search(query)
+        self.last_search.load()
+        self.last_search.type = t
+
+    def more(self):
+        if self.last_search:
+            t = self.last_search.type
+            self.last_search = self.last_search.more()
+            self.last_search.load()
+            self.last_search.type = t
+
+    def print_results(self):
+        if self.last_search:
+            t = self.last_search.type
+            if t == "artist":
+                if self.last_search.artists:
+                    for artist in self.last_search.artists:
+                        print("<%s> %s" % (artist.link, artist.name))
+                else:
+                    print("No results.")
+            elif t == "playlist":
+                if self.last_search.playlists:
+                    for playlist in self.last_search.playlists:
+                        print("<%s> %s" % (playlist.uri, playlist.name))
+                else:
+                    print("No results.")
+            elif t == "track":
+                if self.last_search.tracks:
+                    for track in self.last_search.tracks:
+                        print("<%s> %s by %s (from %s)" % (track.link, track.name, track.album.artist.name, track.album.name))
+                else:
+                    print("No results.")
+            elif t == "album":
+                if self.last_search.albums:
+                    for album in self.last_search.albums:
+                        print("<%s> %s by %s (%d)" % (album.link, album.name, album.artist.name, album.year))
+                else:
+                    print("No results.")
+            else:
+                raise ValueError("Wrong search type")
+
+    def quit(self):
+        self.spotify_session.logout()
+        self.events.logged_out_event.wait()
+        self.loop.stop()
+
+    def enqueueResults(self):
+        if(self.results):
+            self.player.enqueue(self.results)
+        else:
+            print("No results.")
+
+    def getTracks(self, t, query):
+        self.results = []
+        if t == "track":
+            track = self.spotify_session.get_track(query)
+            self.results = [ track ]
+        elif t == "album":
+            album = self.spotify_session.get_album(query)
+            browser = album.browse()
+            browser.load()
+            self.results = browser.tracks
+        elif t == "artist":
+            artist = self.spotify_session.get_artist(query)
+            browser = artist.browse()
+            browser.load()
+            self.results = browser.tracks
+        elif t == "similar":
+            artist = self.spotify_session.get_artist(query)
+            browser = artist.browse()
+            browser.load()
+            for sim in browser.similar_artists:
+                b = sim.browse()
+                b.load()
+                if(b.tracks):
+                    self.results.append(b.tracks[0])
+        elif t == "playlist":
+            playlist = self.spotify_session.get_playlist(query)
+            playlist.load()
+            self.results = playlist.tracks
+        elif t == "search":
+            search = self.spotify_session.search(query)
+            search.load()
+            self.results = list(search.tracks)
+            search = search.more()
+            search.load()
+            self.results.extend(list(search.tracks))
+        else:
+            print("Not implemented yet.")
+
+        for track in self.results:
+            track.load()
+
+    def test(self):
+        self.search = self.spotify_session.search(u'Amber Asylum Riviera')
+        self.search.load()
+        track = self.search.tracks[0]
+        track.load()
+        self.spotify_session.player.load(track)
+        self.spotify_session.player.play()
+
