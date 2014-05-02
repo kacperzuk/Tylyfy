@@ -10,7 +10,7 @@ class Prompt(object):
         self.player = player
 
     def __str__(self):
-        if not self.player.playing:
+        if not self.player.playing or self.player.current >= len(self.player.playlist):
             return "tylyfy>"
         t = self.player.playlist[self.player.current]
         return "\nNow playing: %s by %s (%s)\nTracks to the end of playlist: %d\ntylyfy> " % (t.name, t.album.artist.name, t.album.name, len(self.player.playlist)-self.player.current -1)

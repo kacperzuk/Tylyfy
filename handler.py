@@ -20,11 +20,18 @@ class Events(object):
         self.blob_updated = threading.Event()
         self.blob_data = ""
         self.logged_out_event = threading.Event()
+        self.login_event = threading.Event()
+        self.bad_login = threading.Event()
 
     def connection_state_updated(self, session):
         if session.connection.state == spotify.ConnectionState.LOGGED_IN:
             self.connected.set()
             self.logged_out_event.clear()
+
+    def logged_in(self, session, error):
+        if error == spotify.ErrorType.BAD_USERNAME_OR_PASSWORD:
+            self.bad_login.set()
+        self.login_event.set()
 
     def logged_out(self, session):
         self.connected.clear()
@@ -69,18 +76,23 @@ class Handler(object):
         config.tracefile = b'/tmp/tylyfy.trace.log'
         
         session = spotify.Session(config=config)
-        try:
-            spotify.PortAudioSink(session)
-        except:
+        if str(self.settings.get('core', 'custom_sink', "False")) == "False":
             try:
-                spotify.AlsaSink(session)
+                spotify.PortAudioSink(session)
             except:
-                raise Exception("No pyAlsaAudio nor pyAudio found, bailing out...")
+                try:
+                    spotify.AlsaSink(session)
+                except:
+                    raise Exception("No pyAlsaAudio nor pyAudio found, bailing out...")
+        else:
+            import sink
+            sink.Sink(session)
         self.loop = spotify.EventLoop(session)
         self.loop.start()
         session.on(spotify.SessionEvent.CONNECTION_STATE_UPDATED, self.events.connection_state_updated)
         session.on(spotify.SessionEvent.CREDENTIALS_BLOB_UPDATED, self.events.credentials_blob_updated)
         session.on(spotify.SessionEvent.LOGGED_OUT, self.events.logged_out)
+        session.on(spotify.SessionEvent.LOGGED_IN, self.events.logged_in)
         session.on(spotify.SessionEvent.END_OF_TRACK, self.endOfTrack)
 
         if username:
@@ -95,15 +107,22 @@ class Handler(object):
     def login(self, username, password):
         self.spotify_session.login(username, password)
         print("Logging in...")
-        if self.events.blob_updated.wait(8):
-            self.settings.set('spotify', 'username', username)
-            self.settings.set('spotify', 'blob', self.events.blob_data)
-            self.settings.sync()
+        if self.events.login_event.wait(10):
+            if self.events.bad_login.is_set():
+                print("Bad username or password")
+                self.events.bad_login.clear()
+                self.events.login_event.clear()
+            else:
+                if self.events.blob_updated.wait(8):
+                    self.settings.set('spotify', 'username', username)
+                    self.settings.set('spotify', 'blob', self.events.blob_data)
+                    self.settings.sync()
         else:
-            print("Login error")
+            print("Timeout")
 
     @require_login
     def endOfTrack(self, session):
+        self.logger.debug("Track end")
         self.player.next()
 
     @require_login
@@ -136,6 +155,12 @@ class Handler(object):
             c.load()
         
         in_folder = False
+        if len(c) > 0:
+            print("Your playlists:")
+        else:
+            print("You don't have any playlists.")
+            return
+
         for item in c:
             if isinstance(item, spotify.Playlist):
                 if item.description:
@@ -232,8 +257,6 @@ class Handler(object):
             search = search.more()
             search.load()
             self.results.extend(list(search.tracks))
-        else:
-            print("Not implemented yet.")
 
         for track in self.results:
             track.load()
