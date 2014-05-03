@@ -16,7 +16,7 @@ class Settings(object):
             "lastfm": {
                 "custom_scrobbler": "False",
                 "username": "your_login",
-                "password": "password_md5_hash",
+                "password": "password_or_md5_hash_if_using_custom",
                 "api_key": "api_key",
                 "secret_key": "secret_key"
                 }

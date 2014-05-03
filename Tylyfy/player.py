@@ -50,7 +50,8 @@ class Player(object):
             self.scrobbler.update_now_playing(t.album.artist.name, t.name, t.album.name, int(t.duration/1000))
 
     def next(self):
-        self.scrobbler.scrobble()
+        if self.scrobbler:
+            self.scrobbler.scrobble()
         self.player.unload()
         self.current += 1
         if self.current >= len(self.playlist):
@@ -61,7 +62,8 @@ class Player(object):
                 self.playing = False
         if self.current < len(self.playlist):
             t = self.playlist[self.current]
-            self.scrobbler.update_now_playing(t.album.artist.name, t.name, t.album.name, int(t.duration/1000))
+            if self.scrobbler:
+                self.scrobbler.update_now_playing(t.album.artist.name, t.name, t.album.name, int(t.duration/1000))
             self.player.load(t)
             self.player.play()
             self.playing = True
