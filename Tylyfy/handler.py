@@ -130,8 +130,8 @@ class Handler(object):
                     self.settings.set('spotify', 'username', username)
                     self.settings.set('spotify', 'blob', self.events.blob_data)
                     self.settings.sync()
-                    session.social.set_scrobbling(spotify.SocialProvider.SPOTIFY, spotify.ScrobblingState.GLOBAL_ENABLED)
-                    session.social.set_scrobbling(spotify.SocialProvider.FACEBOOK, spotify.ScrobblingState.GLOBAL_ENABLED)
+                    session.social.set_scrobbling(spotify.SocialProvider.SPOTIFY, spotify.ScrobblingState.LOCAL_ENABLED)
+                    session.social.set_scrobbling(spotify.SocialProvider.FACEBOOK, spotify.ScrobblingState.LOCAL_ENABLED)
                     lastfm_user = self.settings.get("lastfm", "username", False)
                     if lastfm_user:
                         session.social.set_social_credentials(spotify.SocialProvider.LASTFM, lastfm_user, self.settings.get("lastfm", "password", ""))
