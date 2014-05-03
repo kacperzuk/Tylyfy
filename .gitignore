@@ -1,5 +1,6 @@
 *.pyc
-/tylyfy/tmp/
+tmp/
 .*.swp
 /MANIFEST
 /build/
+/dist/

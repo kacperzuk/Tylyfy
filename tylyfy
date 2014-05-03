@@ -2,7 +2,7 @@
 
 import logging
 import traceback
-from tylyfy.handler import Handler
+from Tylyfy.handler import Handler
 import cmd
 import sys, os
 
@@ -91,12 +91,12 @@ If type isn't supplied it's assumed to be artist."""
 
     def do_current(self, query):
         """Show current playlist and track"""
-        i = 0
+        i = 1
         for track in self.handler.player.playlist:
-            if self.handler.player.current == i:
-                print("** %s by %s (%s) (currently played)" % (track.name, track.album.artist.name, track.album.name))
+            if self.handler.player.current == i-1:
+                print("** %d. %s by %s (%s) (currently played)" % (i, track.name, track.album.artist.name, track.album.name))
             else:
-                print("%s by %s (%s)" % (track.name, track.album.artist.name, track.album.name))
+                print("%d. %s by %s (%s)" % (i, track.name, track.album.artist.name, track.album.name))
             i += 1
 
     def do_repeat(self, query):
@@ -106,6 +106,10 @@ If type isn't supplied it's assumed to be artist."""
             print("Repeat: on")
         else:
             print("Repeat: off")
+
+    def do_jump(self, query):
+        """jump <n> - jump to specific track on playlist"""
+        self.handler.player.jump(int(query))
 
     def do_shell(self, query):
         """exec(query)"""

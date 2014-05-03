@@ -9,8 +9,8 @@ setup(name='Tylyfy',
       author='Kacper Żuk',
       author_email='kacper.b.zuk+tylyfy@gmail.com',
       url='https://bitbucket.org/Kazuldur/tylyfy',
-      packages=['tylyfy'],
-      scripts=['tylyfy/tylyfy'],
+      packages=['Tylyfy'],
+      scripts=['tylyfy'],
       requires = [
           'pyspotify',
           'pyalsaaudio'

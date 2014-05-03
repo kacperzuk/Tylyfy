@@ -35,6 +35,14 @@ class Player(object):
                 self.player.play()
                 self.logger.debug("Playback started")
 
+    def jump(self, n):
+        n = n-1
+        if n > 0 and n < len(self.playlist):
+            self.player.unload()
+            self.current = n
+            self.player.load(self.playlist[self.current])
+            self.player.play()
+
     def next(self):
         self.player.unload()
         self.current += 1

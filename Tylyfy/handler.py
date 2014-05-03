@@ -1,5 +1,5 @@
-from tylyfy import settings
-from tylyfy import player
+from Tylyfy import settings
+from Tylyfy import player
 import logging
 import threading
 import spotify
