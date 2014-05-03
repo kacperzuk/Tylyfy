@@ -3,6 +3,7 @@
 import logging
 import traceback
 from Tylyfy.handler import Handler
+from Tylyfy.colors import *
 import spotify
 import cmd
 import sys, os
@@ -12,14 +13,14 @@ class Prompt(object):
         self.player = player
 
     def __str__(self):
-        if not self.player.playing or self.player.current >= len(self.player.playlist):
-            return "tylyfy>"
+        if not self.player.playing or self.player.current >= len(self.player.playlist) or self.player.current < 0:
+            return PROMPT+"tylyfy> "+RESET
         t = self.player.playlist[self.player.current]
-        return "\nNow playing: %s by %s (%s)\nTracks to the end of playlist: %d\ntylyfy> " % (t.name, t.album.artist.name, t.album.name, len(self.player.playlist)-self.player.current -1)
+        return "\n%sNow playing:%s %s%s by%s %s%s (%s)\n%sTracks to the end of playlist: %d\n%stylyfy>%s " % (PLAYED, TRACK, t.name, SEPARATOR, ARTIST, t.album.artist.name, ALBUM, t.album.name, TRACKS_TO_END, len(self.player.playlist)-self.player.current -1, PROMPT, RESET)
 
 class Tylyfy(cmd.Cmd):
-    doc_header = 'Available commands'
-    prompt = 'tylyfy> '
+    doc_header = HEADING+'Available commands'+RESET
+    prompt = PROMPT+'tylyfy> '+RESET
 
     def __init__(self):
         cmd.Cmd.__init__(self)
@@ -99,18 +100,18 @@ If type isn't supplied it's assumed to be artist."""
                 if r:
                     return
             if self.handler.player.current == i-1:
-                print("** %d. %s by %s (%s) (currently played)" % (i, track.name, track.album.artist.name, track.album.name))
+                print("%s ** %d. %s%s%s by%s %s %s(%s) %s(currently played)%s" % (PLAYED, i, TRACK, track.name, SEPARATOR, ARTIST, track.album.artist.name, ALBUM, track.album.name, PLAYED, RESET))
             else:
-                print("%d. %s by %s (%s)" % (i, track.name, track.album.artist.name, track.album.name))
+                print("%s%d. %s%s %sby%s %s%s (%s)%s" % (PLAYLIST, i, TRACK, track.name, SEPARATOR, ARTIST, track.album.artist.name, ALBUM, track.album.name, RESET))
             i += 1
 
     def do_repeat(self, query):
         """Toggle looping through playlist"""
         self.handler.player.loop = not self.handler.player.loop
         if(self.handler.player.loop):
-            print("Repeat: on")
+            print(INFO+"Repeat: on"+RESET)
         else:
-            print("Repeat: off")
+            print(INFO+"Repeat: off"+RESET)
 
     def do_jump(self, query):
         """jump <n> - jump to specific track on playlist"""

@@ -4,6 +4,7 @@ import logging
 import threading
 import spotify
 import os
+from Tylyfy.colors import *
 
 def require_login(f):
     def wrapper(*args):
@@ -11,23 +12,33 @@ def require_login(f):
             f(*args)
             return True
         else:
-            print("You must login first!")
+            print(ERROR+"You must login first!"+RESET)
             return False
     return wrapper
 
 class Events(object):
-    def __init__(self):
+    def __init__(self, settings):
+        self.settings = settings
         self.connected = threading.Event()
         self.blob_updated = threading.Event()
         self.blob_data = ""
         self.logged_out_event = threading.Event()
         self.login_event = threading.Event()
         self.bad_login = threading.Event()
+        self.logger = logging.getLogger("Events")
 
     def connection_state_updated(self, session):
         if session.connection.state == spotify.ConnectionState.LOGGED_IN:
             self.connected.set()
             self.logged_out_event.clear()
+
+            session.social.set_scrobbling(spotify.SocialProvider.SPOTIFY, spotify.ScrobblingState.LOCAL_ENABLED)
+            session.social.set_scrobbling(spotify.SocialProvider.FACEBOOK, spotify.ScrobblingState.LOCAL_ENABLED)
+            lastfm_user = self.settings.get("lastfm", "username", False)
+            if lastfm_user:
+                session.social.set_social_credentials(spotify.SocialProvider.LASTFM, lastfm_user, self.settings.get("lastfm", "password", ""))
+            session.social.set_scrobbling(spotify.SocialProvider.LASTFM, spotify.ScrobblingState.LOCAL_ENABLED)
+            self.logger.debug("Scrobblers enabled")
 
     def logged_in(self, session, error):
         if error == spotify.ErrorType.BAD_USERNAME_OR_PASSWORD:
@@ -35,7 +46,7 @@ class Events(object):
         self.login_event.set()
 
     def message_to_user(self, session, data):
-        print("Libspotify message: %s" % data)
+        print("%sLibspotify message: %s%s" % (INFO, data, RESET))
 
     def logged_out(self, session):
         self.connected.clear()
@@ -46,13 +57,13 @@ class Events(object):
         self.blob_updated.set()
 
     def scrobble_error(self, session, error):
-        print("Scrobble error: %s" % str(error))
+        print("%sScrobble error: %s%s" % (ERROR, str(error), RESET))
 
 class Handler(object):
     def __init__(self):
         self.settings = settings.Settings()
         self.logger = self.setupLogging()
-        self.events = Events()
+        self.events = Events(self.settings)
         self.spotify_session = self.setupSpotify()
         self.player = player.Player(self.spotify_session.player)
         self.results = None
@@ -109,35 +120,31 @@ class Handler(object):
         session.on(spotify.SessionEvent.END_OF_TRACK, self.endOfTrack)
 
         if username:
-            print("Logged in as: %s" % username)
+            print("%sLogged in as: %s%s" % (INFO, username, RESET))
             session.login(username, blob=blob)
             self.events.connected.wait()
             self.logger.debug('Login and connection successful')
         else:
-            print("Remember to login")
+            print(NOTICE+"Remember to login"+RESET)
         return session
 
     def login(self, username, password):
         self.spotify_session.login(username, password)
-        print("Logging in...")
+        print(WAIT_MESSAGE+"Logging in..."+RESET)
         if self.events.login_event.wait(10):
             if self.events.bad_login.is_set():
-                print("Bad username or password")
+                print(ERROR+"Bad username or password"+RESET)
                 self.events.bad_login.clear()
                 self.events.login_event.clear()
             else:
+
                 if self.events.blob_updated.wait(8):
+                    self.logger.debug("Blob updated")
                     self.settings.set('spotify', 'username', username)
                     self.settings.set('spotify', 'blob', self.events.blob_data)
                     self.settings.sync()
-                    session.social.set_scrobbling(spotify.SocialProvider.SPOTIFY, spotify.ScrobblingState.LOCAL_ENABLED)
-                    session.social.set_scrobbling(spotify.SocialProvider.FACEBOOK, spotify.ScrobblingState.LOCAL_ENABLED)
-                    lastfm_user = self.settings.get("lastfm", "username", False)
-                    if lastfm_user:
-                        session.social.set_social_credentials(spotify.SocialProvider.LASTFM, lastfm_user, self.settings.get("lastfm", "password", ""))
-                    session.social.set_scrobbling(spotify.SocialProvider.LASTFM, spotify.ScrobblingState.LOCAL_ENABLED)
         else:
-            print("Timeout")
+            print(ERROR+"Timeout"+RESET)
 
     @require_login
     def endOfTrack(self, session):
@@ -175,15 +182,15 @@ class Handler(object):
         
         in_folder = False
         if len(c) > 0:
-            print("Your playlists:")
+            print(HEADING+"Your playlists:"+RESET)
         else:
-            print("You don't have any playlists.")
+            print(ERROR+"You don't have any playlists."+RESET)
             return
 
         i = 0
         for item in c:
-            if (i-1) % 15 == 14:
-                r = raw_input("==== %d more results. Press enter to see them, or anything else and enter to skip ====\n" % (len(c)-i+1))
+            if (i) % 15 == 14:
+                r = raw_input("%s==== %d more results. Press enter to see them, or anything else and enter to skip ====%s\n" % (RULER, len(c)-i+1, RESET))
                 if r:
                     return
             i += 1
@@ -193,12 +200,12 @@ class Handler(object):
                 else:
                     name = item.name
                 if in_folder:
-                    print("|- %s" % name)
+                    print("%s|- %s%s%s" % (RULER, name, PLAYLIST, RESET))
                 else:
                     print(name)
             elif item.type == spotify.PlaylistType.START_FOLDER:
                 in_folder = True
-                print("Folder: %s:" % item.name)
+                print("%sFolder: %s:%s" % (HEADING, item.name, RESET))
             elif item.type == spotify.PlaylistType.END_FOLDER:
                 in_folder = False
 
@@ -209,27 +216,27 @@ class Handler(object):
             if t == "artist":
                 if self.last_search.artists:
                     for artist in self.last_search.artists:
-                        print("<%s> %s" % (artist.link, artist.name))
+                        print("%s<%s>%s %s%s" % (LINK, artist.link, ARTIST, artist.name, RESET))
                 else:
-                    print("No results.")
+                    print(ERROR+"No results."+RESET)
             elif t == "playlist":
                 if self.last_search.playlists:
                     for playlist in self.last_search.playlists:
-                        print("<%s> %s" % (playlist.uri, playlist.name))
+                        print("%s<%s>%s %s%s" % (LINK, playlist.uri, PLAYLIST, playlist.name, RESET))
                 else:
-                    print("No results.")
+                    print(ERROR+"No results."+RESET)
             elif t == "track":
                 if self.last_search.tracks:
                     for track in self.last_search.tracks:
-                        print("<%s> %s by %s (from %s)" % (track.link, track.name, track.album.artist.name, track.album.name))
+                        print("%s<%s>%s %s%s by%s %s%s (from%s %s%s)%s" % (LINK, track.link, TRACK, track.name, SEPARATOR, ARTIST, track.album.artist.name, SEPARATOR, ALBUM, track.album.name, SEPARATOR, RESET))
                 else:
-                    print("No results.")
+                    print(ERROR+"No results."+RESET)
             elif t == "album":
                 if self.last_search.albums:
                     for album in self.last_search.albums:
-                        print("<%s> %s by %s (%d)" % (album.link, album.name, album.artist.name, album.year))
+                        print("%s<%s>%s %s%s by%s %s (%d)%s" % (LINK, album.link, ALBUM, album.name, SEPARATOR, ARTIST, album.artist.name, ALBUM, album.year, RESET))
                 else:
-                    print("No results.")
+                    print(ERROR+"No results."+RESET)
             else:
                 raise ValueError("Wrong search type")
 
@@ -244,7 +251,7 @@ class Handler(object):
         if(self.results):
             self.player.enqueue(self.results)
         else:
-            print("No results.")
+            print(ERROR+"No results."+RESET)
 
     @require_login
     def getTracks(self, t, query):
