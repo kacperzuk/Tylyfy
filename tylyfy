@@ -16,7 +16,11 @@ class Prompt(object):
         if not self.player.playing or self.player.current >= len(self.player.playlist) or self.player.current < 0:
             return PROMPT+"tylyfy> "+RESET
         t = self.player.playlist[self.player.current]
-        return "\n%sNow playing:%s %s%s by%s %s%s (%s)\n%sTracks to the end of playlist: %d\n%stylyfy>%s " % (PLAYED, TRACK, t.name, SEPARATOR, ARTIST, t.album.artist.name, ALBUM, t.album.name, TRACKS_TO_END, len(self.player.playlist)-self.player.current -1, PROMPT, RESET)
+        ret = "\n%sNow playing:%s %s%s by%s %s%s (%s)\n"% (PLAYED, TRACK, t.name, SEPARATOR, ARTIST, t.album.artist.name, ALBUM, t.album.name)
+        if not self.player.random:
+            ret += "%sTracks to the end of playlist: %d\n" % (TRACKS_TO_END, len(self.player.playlist)-self.player.current -1)
+        ret += "%stylyfy>%s " % (PROMPT, RESET)
+        return ret
 
 class Tylyfy(cmd.Cmd):
     doc_header = HEADING+'Available commands'+RESET
@@ -110,7 +114,8 @@ If type isn't supplied it's assumed to be artist."""
             i += 1
 
     def do_repeat(self, query):
-        """Toggle looping through playlist"""
+        """repeat - toggle looping through playlist
+repeat one - toggle looping current track"""
         if query == "one":
             self.handler.player.loop_one = not self.handler.player.loop_one
             if(self.handler.player.loop_one):
@@ -123,6 +128,14 @@ If type isn't supplied it's assumed to be artist."""
                 print(INFO+"Repeat: on"+RESET)
             else:
                 print(INFO+"Repeat: off"+RESET)
+
+    def do_random(self, query):
+        """random - toggle playing random songs"""
+        self.handler.player.random = not self.handler.player.random
+        if(self.handler.player.random):
+            print(INFO+"Random: on"+RESET)
+        else:
+            print(INFO+"Random: off"+RESET)
 
     def do_jump(self, query):
         """jump <n> - jump to specific track on playlist"""

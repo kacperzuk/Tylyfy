@@ -1,5 +1,6 @@
 import spotify
 import logging
+import random
 
 class Player(object):
     def __init__(self, player, scrobbler=None):
@@ -7,6 +8,7 @@ class Player(object):
         self.logger = logging.getLogger(__name__)
         self.loop = False
         self.loop_one = False
+        self.random = False
         self.playlist = []
         self.current = -1
         self.playing = False
@@ -55,7 +57,12 @@ class Player(object):
             self.scrobbler.scrobble()
         self.player.unload()
         if force or not self.loop_one or self.current == -1:
-            self.current += 1
+            if self.random:
+                old = self.current
+                while old == self.current:
+                    self.current = random.randrange(0, len(self.playlist))
+            else:
+                self.current += 1
         if self.current >= len(self.playlist):
             if self.loop:
                 self.current = 0
