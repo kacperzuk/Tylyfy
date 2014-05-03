@@ -34,6 +34,9 @@ class Events(object):
             self.bad_login.set()
         self.login_event.set()
 
+    def message_to_user(self, session, data):
+        print("Libspotify message: %s" % data)
+
     def logged_out(self, session):
         self.connected.clear()
         self.logged_out_event.set()
@@ -41,6 +44,9 @@ class Events(object):
     def credentials_blob_updated(self, session, blob):
         self.blob_data = blob
         self.blob_updated.set()
+
+    def scrobble_error(self, session, error):
+        print("Scrobble error: %s" % str(error))
 
 class Handler(object):
     def __init__(self):
@@ -98,6 +104,8 @@ class Handler(object):
         session.on(spotify.SessionEvent.CREDENTIALS_BLOB_UPDATED, self.events.credentials_blob_updated)
         session.on(spotify.SessionEvent.LOGGED_OUT, self.events.logged_out)
         session.on(spotify.SessionEvent.LOGGED_IN, self.events.logged_in)
+        session.on(spotify.SessionEvent.SCROBBLE_ERROR, self.events.scrobble_error)
+        session.on(spotify.SessionEvent.MESSAGE_TO_USER, self.events.message_to_user)
         session.on(spotify.SessionEvent.END_OF_TRACK, self.endOfTrack)
 
         if username:
@@ -122,6 +130,12 @@ class Handler(object):
                     self.settings.set('spotify', 'username', username)
                     self.settings.set('spotify', 'blob', self.events.blob_data)
                     self.settings.sync()
+                    session.social.set_scrobbling(spotify.SocialProvider.SPOTIFY, spotify.ScrobblingState.GLOBAL_ENABLED)
+                    session.social.set_scrobbling(spotify.SocialProvider.FACEBOOK, spotify.ScrobblingState.GLOBAL_ENABLED)
+                    lastfm_user = self.settings.get("lastfm", "username", False)
+                    if lastfm_user:
+                        session.social.set_social_credentials(spotify.SocialProvider.LASTFM, lastfm_user, self.settings.get("lastfm", "password", ""))
+                    session.social.set_scrobbling(spotify.SocialProvider.LASTFM, spotify.ScrobblingState.LOCAL_ENABLED)
         else:
             print("Timeout")
 
@@ -166,7 +180,13 @@ class Handler(object):
             print("You don't have any playlists.")
             return
 
+        i = 0
         for item in c:
+            if (i-1) % 15 == 14:
+                r = raw_input("==== %d more results. Press enter to see them, or anything else and enter to skip ====\n" % (len(c)-i+1))
+                if r:
+                    return
+            i += 1
             if isinstance(item, spotify.Playlist):
                 if item.description:
                     name = "%s, %s" % (item.name, item.description)

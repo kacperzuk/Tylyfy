@@ -3,6 +3,7 @@
 import logging
 import traceback
 from Tylyfy.handler import Handler
+import spotify
 import cmd
 import sys, os
 
@@ -93,6 +94,10 @@ If type isn't supplied it's assumed to be artist."""
         """Show current playlist and track"""
         i = 1
         for track in self.handler.player.playlist:
+            if (i-1) % 15 == 14:
+                r = raw_input("==== %d more results. Press enter to see them, or anything else and enter to skip ====\n" % (len(self.handler.player.playlist)-i+1))
+                if r:
+                    return
             if self.handler.player.current == i-1:
                 print("** %d. %s by %s (%s) (currently played)" % (i, track.name, track.album.artist.name, track.album.name))
             else:
