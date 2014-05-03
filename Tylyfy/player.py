@@ -6,6 +6,7 @@ class Player(object):
         self.player = player
         self.logger = logging.getLogger(__name__)
         self.loop = False
+        self.loop_one = False
         self.playlist = []
         self.current = -1
         self.playing = False
@@ -49,11 +50,12 @@ class Player(object):
             self.player.play()
             self.scrobbler.update_now_playing(t.album.artist.name, t.name, t.album.name, int(t.duration/1000))
 
-    def next(self):
+    def next(self, force=False):
         if self.scrobbler:
             self.scrobbler.scrobble()
         self.player.unload()
-        self.current += 1
+        if force or not self.loop_one or self.current == -1:
+            self.current += 1
         if self.current >= len(self.playlist):
             if self.loop:
                 self.current = 0

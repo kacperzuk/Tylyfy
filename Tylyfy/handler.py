@@ -203,7 +203,11 @@ class Handler(object):
         i = 0
         for item in c:
             if (i) % 15 == 14:
-                r = raw_input("%s==== %d more results. Press enter to see them, or anything else and enter to skip ====%s\n" % (RULER, len(c)-i+1, RESET))
+                try:
+                    r = raw_input("%s==== %d more results. Press enter to see them, or anything else and enter to skip ====%s\n" % (RULER, len(c)-i+1, RESET))
+                except NameError:
+                    r = input("%s==== %d more results. Press enter to see them, or anything else and enter to skip ====%s\n" % (RULER, len(c)-i+1, RESET))
+
                 if r:
                     return
             i += 1

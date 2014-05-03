@@ -68,7 +68,7 @@ If type isn't supplied it's assumed to be artist."""
 
     def do_next(self, q):
         """next: skip to next song"""
-        self.handler.player.next()
+        self.handler.player.next(force=True)
 
     def do_pause(self, q):
         """pause: pause playback"""
@@ -96,7 +96,11 @@ If type isn't supplied it's assumed to be artist."""
         i = 1
         for track in self.handler.player.playlist:
             if (i-1) % 15 == 14:
-                r = raw_input("==== %d more results. Press enter to see them, or anything else and enter to skip ====\n" % (len(self.handler.player.playlist)-i+1))
+                try:
+                    r = raw_input("==== %d more results. Press enter to see them, or anything else and enter to skip ====\n" % (len(self.handler.player.playlist)-i+1))
+                except NameError:
+                    r = input("==== %d more results. Press enter to see them, or anything else and enter to skip ====\n" % (len(self.handler.player.playlist)-i+1))
+
                 if r:
                     return
             if self.handler.player.current == i-1:
@@ -107,11 +111,18 @@ If type isn't supplied it's assumed to be artist."""
 
     def do_repeat(self, query):
         """Toggle looping through playlist"""
-        self.handler.player.loop = not self.handler.player.loop
-        if(self.handler.player.loop):
-            print(INFO+"Repeat: on"+RESET)
+        if query == "one":
+            self.handler.player.loop_one = not self.handler.player.loop_one
+            if(self.handler.player.loop_one):
+                print(INFO+"Repeat one: on"+RESET)
+            else:
+                print(INFO+"Repeat one: off"+RESET)
         else:
-            print(INFO+"Repeat: off"+RESET)
+            self.handler.player.loop = not self.handler.player.loop
+            if(self.handler.player.loop):
+                print(INFO+"Repeat: on"+RESET)
+            else:
+                print(INFO+"Repeat: off"+RESET)
 
     def do_jump(self, query):
         """jump <n> - jump to specific track on playlist"""
