@@ -120,7 +120,7 @@ If type isn't supplied it's assumed to be artist."""
     def do_shell(self, query):
         """exec(query)"""
         try:
-            exec query
+            exec(query)
         except Exception:
             traceback.print_exc()
 
