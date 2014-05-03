@@ -188,6 +188,19 @@ class Handler(object):
             self.last_search.type = t
 
     @require_login
+    def getTracksFromPlaylist(self, q):
+        c = self.spotify_session.playlist_container
+        if not c.is_loaded:
+            c.load()
+        for item in c:
+            if item.name.lower() == q.lower():
+                if not item.is_loaded:
+                    item.load()
+                self.results = item.tracks
+                for track in self.results:
+                    track.load()
+
+    @require_login
     def showPlaylists(self):
         c = self.spotify_session.playlist_container
         if not c.is_loaded:
@@ -213,11 +226,11 @@ class Handler(object):
             i += 1
             if isinstance(item, spotify.Playlist):
                 if item.description:
-                    name = "%s, %s" % (item.name, item.description)
+                    name = "%s%s, %s (%s tracks)" % (PLAYLIST, item.name, item.description, len(item.tracks))
                 else:
-                    name = item.name
+                    name = "%s%s (%s tracks)" % (PLAYLIST, item.name, len(item.tracks))
                 if in_folder:
-                    print("%s|- %s%s%s" % (RULER, name, PLAYLIST, RESET))
+                    print("%s|- %s%s" % (RULER, name, RESET))
                 else:
                     print(name)
             elif item.type == spotify.PlaylistType.START_FOLDER:
@@ -269,6 +282,7 @@ class Handler(object):
             self.player.enqueue(self.results)
         else:
             print(ERROR+"No results."+RESET)
+        self.results = []
 
     @require_login
     def getTracks(self, t, query):

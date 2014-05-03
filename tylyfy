@@ -149,8 +149,24 @@ repeat one - toggle looping current track"""
             traceback.print_exc()
 
     def do_playlists(self, query):
-        """playlists - show your playlists"""
-        self.handler.showPlaylists()
+        """playlists - show your playlists
+playlists enqueue/play <item_name> - enqueue/play playlist/folder"""
+        if not query:
+            self.handler.showPlaylists()
+        else:
+            query = query.split(' ')
+            action = query.pop(0)
+            ret = self.handler.getTracksFromPlaylist(' '.join(query))
+
+            if action == "play":
+                self.handler.player.clear()
+
+            if ret:
+                self.handler.enqueueResults()
+
+            if action == "play":
+                self.handler.player.next()
+
 
     def do_enqueue(self, query):
         """enqueue: add object to playlist:
