@@ -1,8 +1,9 @@
-import settings
+from tylyfy import settings
+from tylyfy import player
 import logging
 import threading
 import spotify
-import player
+import os
 
 def require_login(f):
     def wrapper(*args):
@@ -74,7 +75,11 @@ class Handler(object):
         config = spotify.Config()
         config.user_agent = 'Tylyfy - CLI Player'
         config.tracefile = b'/tmp/tylyfy.trace.log'
-        
+        try:
+            config.load_application_key_file(os.path.join(os.path.expanduser("~"), ".config", "tylyfy", "spotify_appkey.key"))
+        except:
+            raise Exception("Missing spotify_appkey.key.")
+
         session = spotify.Session(config=config)
         if str(self.settings.get('core', 'custom_sink', "False")) == "False":
             try:

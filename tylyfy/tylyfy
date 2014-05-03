@@ -2,8 +2,9 @@
 
 import logging
 import traceback
-from handler import Handler
+from tylyfy.handler import Handler
 import cmd
+import sys, os
 
 class Prompt(object):
     def __init__(self, player):
