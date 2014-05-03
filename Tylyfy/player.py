@@ -2,13 +2,14 @@ import spotify
 import logging
 
 class Player(object):
-    def __init__(self, player):
+    def __init__(self, player, scrobbler=None):
         self.player = player
         self.logger = logging.getLogger(__name__)
         self.loop = False
         self.playlist = []
         self.current = -1
         self.playing = False
+        self.scrobbler = scrobbler
 
     def enqueue(self, tracks):
         if isinstance(tracks, spotify.Track):
@@ -31,19 +32,25 @@ class Player(object):
             self.player.play()
         else:
             if self.current < len(self.playlist) and self.current >= 0:
-                self.player.load(self.playlist[self.current])
+                t = self.playlist[self.current]
+                self.player.load(t)
                 self.player.play()
+                self.scrobbler.update_now_playing(t.album.artist.name, t.name, t.album.name, int(t.duration/1000))
                 self.logger.debug("Playback started")
 
     def jump(self, n):
         n = n-1
         if n > 0 and n < len(self.playlist):
+            self.scrobbler.scrobble()
             self.player.unload()
             self.current = n
-            self.player.load(self.playlist[self.current])
+            t = self.playlist[self.current]
+            self.player.load(t)
             self.player.play()
+            self.scrobbler.update_now_playing(t.album.artist.name, t.name, t.album.name, int(t.duration/1000))
 
     def next(self):
+        self.scrobbler.scrobble()
         self.player.unload()
         self.current += 1
         if self.current >= len(self.playlist):
@@ -51,10 +58,10 @@ class Player(object):
                 self.current = 0
             else:
                 self.player.pause()
-                self.player.unload()
                 self.playing = False
         if self.current < len(self.playlist):
             t = self.playlist[self.current]
+            self.scrobbler.update_now_playing(t.album.artist.name, t.name, t.album.name, int(t.duration/1000))
             self.player.load(t)
             self.player.play()
             self.playing = True

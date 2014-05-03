@@ -1,5 +1,6 @@
 from Tylyfy import settings
 from Tylyfy import player
+from Tylyfy import scrobble
 import logging
 import threading
 import spotify
@@ -34,10 +35,13 @@ class Events(object):
 
             session.social.set_scrobbling(spotify.SocialProvider.SPOTIFY, spotify.ScrobblingState.LOCAL_ENABLED)
             session.social.set_scrobbling(spotify.SocialProvider.FACEBOOK, spotify.ScrobblingState.LOCAL_ENABLED)
-            lastfm_user = self.settings.get("lastfm", "username", False)
-            if lastfm_user:
-                session.social.set_social_credentials(spotify.SocialProvider.LASTFM, lastfm_user, self.settings.get("lastfm", "password", ""))
-            session.social.set_scrobbling(spotify.SocialProvider.LASTFM, spotify.ScrobblingState.LOCAL_ENABLED)
+            if not self.settings.get("lastfm", "custom_scrobbler", "True") == "True":
+                lastfm_user = self.settings.get("lastfm", "username", False)
+                if lastfm_user:
+                    session.social.set_social_credentials(spotify.SocialProvider.LASTFM, lastfm_user, self.settings.get("lastfm", "password", ""))
+                session.social.set_scrobbling(spotify.SocialProvider.LASTFM, spotify.ScrobblingState.LOCAL_ENABLED)
+            else:
+                session.social.set_scrobbling(spotify.SocialProvider.LASTFM, spotify.ScrobblingState.LOCAL_DISABLED)
             self.logger.debug("Scrobblers enabled")
 
     def logged_in(self, session, error):
@@ -65,7 +69,14 @@ class Handler(object):
         self.logger = self.setupLogging()
         self.events = Events(self.settings)
         self.spotify_session = self.setupSpotify()
-        self.player = player.Player(self.spotify_session.player)
+        self.scrobbler = None
+        if self.settings.get("lastfm", "custom_scrobbler", "True") == "True":
+            self.scrobbler = scrobble.Scrobbler(
+                    self.settings.get("lastfm", "api_key", ""),
+                    self.settings.get("lastfm", "secret_key", ""),
+                    self.settings.get("lastfm", "username", ""),
+                    self.settings.get("lastfm", "password", ""))
+        self.player = player.Player(self.spotify_session.player, self.scrobbler)
         self.results = None
         self.last_search = None
 
@@ -141,6 +152,8 @@ class Handler(object):
                 if self.events.blob_updated.wait(8):
                     self.logger.debug("Blob updated")
                     self.settings.set('spotify', 'username', username)
+                    if not isinstance(self.events.blob_data, str):
+                        self.events.blob_data = self.events.blob_data.decode('utf-8')
                     self.settings.set('spotify', 'blob', self.events.blob_data)
                     self.settings.sync()
         else:

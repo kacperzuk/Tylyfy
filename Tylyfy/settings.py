@@ -5,6 +5,22 @@ except ImportError:
     import configparser
 
 class Settings(object):
+    DEFAULT={
+            "core": {
+                "loglevel": "warning",
+                "custom_sink": "False"
+                },
+            "spotify": {
+                "loglevel": "warning"
+                },
+            "lastfm": {
+                "custom_scrobbler": "False",
+                "username": "your_login",
+                "password": "password_md5_hash",
+                "api_key": "api_key",
+                "secret_key": "secret_key"
+                }
+            }
     def __init__(self):
         directory = os.path.join(os.path.expanduser("~"), ".config", "tylyfy")
         if not os.path.exists(directory):
@@ -12,6 +28,8 @@ class Settings(object):
         self.path = os.path.join(directory, "settings.ini")
         self.config = configparser.ConfigParser()
         self.config.read(self.path)
+
+        self._initDefaults()
 
     def get(self, section, option, default=None):
         try:
@@ -29,5 +47,11 @@ class Settings(object):
         self.config.set(section, option, str(value))
 
     def sync(self):
-        with open(self.path, 'wb') as f:
+        with open(self.path, 'w') as f:
             self.config.write(f)
+
+    def _initDefaults(self):
+        for section, values in self.DEFAULT.items():
+            for k,v in values.items():
+                self.get(section, k, v)
+        self.sync()
