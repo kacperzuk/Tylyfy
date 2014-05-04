@@ -205,7 +205,7 @@ repeat one - toggle looping current track"""
 
     def do_playlists(self, query):
         """show your playlists (also see help playlists)
-playlists enqueue/play <item_name> - enqueue/play playlist/folder"""
+playlists enqueue/play <item_name> - enqueue/play playlist/folder, you can enter only part of the name"""
         if not query:
             self.handler.showPlaylists()
         else:
