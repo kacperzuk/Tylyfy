@@ -72,7 +72,6 @@ If your sound is choppy and CPU usage is really high, try this:
 [core]
 custom_sink = True
 ```
-3. restart Tylyfy
 
 #### Scrobbling to Last.FM doesn't work
 If scrobbling to Last.FM doesn't work, try this:
@@ -87,4 +86,3 @@ api_key = APIkey
 secrey_key = APIsecret
 ```
 Unhashed password isn't needed anymore.
-3. restart Tylyfy
