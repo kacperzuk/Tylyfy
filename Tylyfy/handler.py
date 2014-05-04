@@ -106,6 +106,8 @@ class Handler(object):
         config = spotify.Config()
         config.user_agent = 'Tylyfy - CLI Player'
         config.tracefile = b'/tmp/tylyfy.trace.log'
+        config.cache_location = os.path.join(os.path.expanduser(b'~'), b'.config', b'tylyfy', b'spotify')
+        config.settings_location = os.path.join(os.path.expanduser(b'~'), b'.config', b'tylyfy', b'spotify')
         try:
             config.load_application_key_file(os.path.join(os.path.expanduser("~"), ".config", "tylyfy", "spotify_appkey.key"))
         except:
