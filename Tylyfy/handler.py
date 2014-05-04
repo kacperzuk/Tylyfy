@@ -76,7 +76,7 @@ class Handler(object):
                         self.settings.get("lastfm", "api_key", ""),
                         self.settings.get("lastfm", "secret_key", ""),
                         self.settings.get("lastfm", "username", ""),
-                        self.settings.get("lastfm", "password", ""))
+                        self.settings.get("lastfm", "password_md5", ""))
             else:
                 print(ERROR+"pylast is missing, disabling LastFM scrobbling"+RESET)
         self.player = player.Player(self.spotify_session.player, self.scrobbler)
