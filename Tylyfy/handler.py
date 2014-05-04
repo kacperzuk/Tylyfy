@@ -31,6 +31,8 @@ import logging
 import threading
 import spotify
 import os
+import textwrap
+import sys
 from Tylyfy.colors import *
 
 def require_login(f):
@@ -137,7 +139,14 @@ class Handler(object):
         try:
             config.load_application_key_file(os.path.join(os.path.expanduser("~"), ".config", "tylyfy", "spotify_appkey.key"))
         except:
-            raise Exception("Missing spotify_appkey.key.")
+            print()
+            print(ERROR+"Missing spotify_appkey.key!"+RESET)
+            print(textwrap.dedent("""
+                To start Tylyfy you need to obtain a Spotify API key. You can get it from:
+                https://devaccount.spotify.com/my-account/keys/. Download the Binary version,
+                save it to ~/.config/tylyfy/spotify_appkey.key and try again.
+                """))
+            sys.exit(1)
 
         session = spotify.Session(config=config)
         if str(self.settings.get('core', 'custom_sink', "False")) == "False":
