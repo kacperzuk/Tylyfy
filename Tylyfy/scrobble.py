@@ -1,4 +1,10 @@
-import pylast
+try:
+    import pylast
+except ImportError:
+    working = False
+else:
+    working = True
+
 import logging
 import time
 from Tylyfy.colors import *
