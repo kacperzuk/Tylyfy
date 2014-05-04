@@ -31,6 +31,34 @@ class Tylyfy(cmd.Cmd):
         self.handler = Handler()
         self.prompt = Prompt(self.handler.player)
 
+    def do_help(self, line):
+        """List available commands with "help" or detailed help with "help cmd"."""
+        if line:
+            cmd.Cmd.do_help(self, line)
+        else:
+            print(self.doc_header)
+            print("%s" % str(self.ruler * len(self.doc_header)))
+
+            names = self.get_names()
+            names.sort()
+            prevname = ''
+            maxlen = 0
+            for n in names:
+                if maxlen < len(n):
+                    maxlen = len(n)
+
+            for name in names:
+                if name[:3] == 'do_':
+                    if name == prevname:
+                        continue
+                    prevname = name
+                    cmdname = name[3:]
+                    if getattr(self, name).__doc__:
+                        doc = getattr(self, name).__doc__
+                        print("%s - %s" % (cmdname.ljust(maxlen), doc.split('\n')[0]))
+                    else:
+                        print("%s" % (cmdname))
+
     def do_EOF(self, line):
         """exit """
         self.handler.quit()
@@ -45,7 +73,8 @@ class Tylyfy(cmd.Cmd):
         self.handler.login(username, password)
 
     def do_search(self, line):
-        """search <type> <query> - search for <type>. Type can be:
+        """search <type> <query> - search for <type>.
+Type can be:
     artist
     playlist
     track
@@ -62,28 +91,28 @@ If type isn't supplied it's assumed to be artist."""
             self.handler.print_results()
 
     def do_more(self, line):
-        """more - show more search results"""
+        """show more search results"""
         if self.handler.more():
             self.handler.print_results()
 
     def do_clear(self, q):
-        """clear: clear playlist"""
+        """clear playlist"""
         self.handler.player.clear()
 
     def do_next(self, q):
-        """next: skip to next song"""
+        """skip to next song"""
         self.handler.player.next(force=True)
 
     def do_pause(self, q):
-        """pause: pause playback"""
+        """pause playback"""
         self.handler.player.pause()
 
     def do_resume(self, q):
-        """resume: resume playback"""
+        """resume playback"""
         self.handler.player.play()
 
     def do_play(self, query):
-        """play: clear playlist and play object:
+        """clear playlist and play object.
     play <spotify:track:song_id> - play song
     play <spotify:album:album_id> - play album
     play <spotify:artist:artist_id> - play all albums of an artist
@@ -114,7 +143,8 @@ If type isn't supplied it's assumed to be artist."""
             i += 1
 
     def do_repeat(self, query):
-        """repeat - toggle looping through playlist
+        """toggle looping through playlist (also please see help repeat)
+repeat - toggle looping through playlist
 repeat one - toggle looping current track"""
         if query == "one":
             self.handler.player.loop_one = not self.handler.player.loop_one
@@ -130,7 +160,7 @@ repeat one - toggle looping current track"""
                 print(INFO+"Repeat: off"+RESET)
 
     def do_random(self, query):
-        """random - toggle playing random songs"""
+        """toggle playing random songs"""
         self.handler.player.random = not self.handler.player.random
         if(self.handler.player.random):
             print(INFO+"Random: on"+RESET)
@@ -149,7 +179,7 @@ repeat one - toggle looping current track"""
             traceback.print_exc()
 
     def do_playlists(self, query):
-        """playlists - show your playlists
+        """show your playlists (also see help playlists)
 playlists enqueue/play <item_name> - enqueue/play playlist/folder"""
         if not query:
             self.handler.showPlaylists()
@@ -169,7 +199,7 @@ playlists enqueue/play <item_name> - enqueue/play playlist/folder"""
 
 
     def do_enqueue(self, query):
-        """enqueue: add object to playlist:
+        """add object to playlist (see help enqueue)
     enqueue <spotify:track:song_id> - enqueue song
     enqueue <spotify:album:album_id> - enqueue album
     enqueue <spotify:artist:artist_id> - enqueue all albums of an artist
