@@ -7,7 +7,7 @@ WAIT_MESSAGE='\033[0;37m' #white
 RULER='\033[1;30m' # gray
 
 HEADING='\033[1;33m' # yellow
-PLAYLIST='\033[1;37m' #white
+PLAYLIST='\033[0;37m' #white
 LINK='\033[1;30m' # gray
 ARTIST='\033[1;36m' #cyan
 TRACK='\033[1;33m' # yellow
@@ -16,4 +16,5 @@ PLAYED='\033[1;32m' # green
 SEPARATOR='\033[0;94m' # light blue
 PROMPT='\033[1;32m' # green
 TRACKS_TO_END='\033[0;37m' #white
+TRACKS_NUMBER='\033[0;94m' # light blue
 

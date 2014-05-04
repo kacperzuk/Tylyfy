@@ -231,13 +231,27 @@ class Handler(object):
         c = self.spotify_session.playlist_container
         if not c.is_loaded:
             c.load()
+        result = None
         for item in c:
             if item.name.lower() == q.lower():
-                if not item.is_loaded:
-                    item.load()
-                self.results = item.tracks
-                for track in self.results:
-                    track.load()
+                self.logger.debug("Direct hit on playlist")
+                result = item
+                break
+            elif not item.name.lower().find(q.lower()):
+                if result == None:
+                    self.logger.debug("Playlist candidate")
+                    result = item
+                else:
+                    self.logger.debug("Another candidate, allow only direct hit now")
+                    result = False
+        if result:
+            if not result.is_loaded:
+                result.load()
+            self.results = result.tracks
+            for track in self.results:
+                track.load()
+        elif result == False:
+            print(INFO+"Ambiguous query, multiple playlists match it"+RESET)
 
     @require_login
     def showPlaylists(self):
@@ -245,7 +259,7 @@ class Handler(object):
         if not c.is_loaded:
             c.load()
         
-        in_folder = False
+        in_folder = 0
         if len(c) > 0:
             print(HEADING+"Your playlists:"+RESET)
         else:
@@ -264,19 +278,16 @@ class Handler(object):
                     return
             i += 1
             if isinstance(item, spotify.Playlist):
-                if item.description:
-                    name = "%s%s, %s (%s tracks)" % (PLAYLIST, item.name, item.description, len(item.tracks))
-                else:
-                    name = "%s%s (%s tracks)" % (PLAYLIST, item.name, len(item.tracks))
-                if in_folder:
-                    print("%s|- %s%s" % (RULER, name, RESET))
-                else:
-                    print(name)
+                name = "%s%s %s(%s tracks)%s" % (PLAYLIST, item.name, TRACKS_NUMBER, len(item.tracks), RESET)
+                print("%s%s|- %s%s" % ("|--"*(in_folder), RULER, name, RESET))
             elif item.type == spotify.PlaylistType.START_FOLDER:
-                in_folder = True
-                print("%sFolder: %s:%s" % (HEADING, item.name, RESET))
+                print("%s%s|%s" % (RULER, "|--"*(in_folder), RESET))
+                print("%s%s|--/-- %sFolder: %s:%s" % ("|--"*(in_folder), RULER, HEADING, item.name, RESET))
+                in_folder += 1
             elif item.type == spotify.PlaylistType.END_FOLDER:
-                in_folder = False
+                print("%s%s\\------%s" % ("|--"*(in_folder), RULER, RESET))
+                in_folder -= 1
+                print("%s%s|%s" % (RULER, "|--"*(in_folder), RESET))
 
     @require_login
     def print_results(self):
