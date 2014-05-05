@@ -97,6 +97,8 @@ class Player(object):
                 self.playing = False
         if self.current < len(self.playlist):
             t = self.playlist[self.current]
+            if not t.availability == spotify.TrackAvailability.AVAILABLE:
+                return self.next(True)
             if self.scrobbler:
                 self.scrobbler.update_now_playing(t.album.artist.name, t.name, t.album.name, int(t.duration/1000))
             self.player.load(t)

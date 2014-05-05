@@ -143,6 +143,7 @@ If type isn't supplied it's assumed to be artist."""
     play <spotify:artist:artist_id> - play all albums of an artist
     play <similar:spotify:artist:artist_id> - play all albums of similar artists
     play <spotify:...:playlist:playlist_id> - play Spotify playlist
+    play starred - play your starred songs
     play <search query> - play first 20 elements of a search query"""
         
         self.handler.player.clear()
@@ -203,6 +204,14 @@ repeat one - toggle looping current track"""
         except Exception:
             traceback.print_exc()
 
+    def do_star(self, query):
+        """star current song
+star unset - unstar current song"""
+        if not query:
+            self.handler.setStarred(True)
+        else:
+            self.handler.setStarred(False)
+
     def do_playlists(self, query):
         """show your playlists (also see help playlists)
 playlists enqueue/play <item_name> - enqueue/play playlist/folder, you can enter only part of the name"""
@@ -230,6 +239,7 @@ playlists enqueue/play <item_name> - enqueue/play playlist/folder, you can enter
     enqueue <spotify:artist:artist_id> - enqueue all albums of an artist
     enqueue <similar:spotify:artist:artist_id> - enqueue all albums of similar artists
     enqueue <spotify:...:playlist:playlist_id> - enqueue Spotify playlist
+    enqueue starred - enqueue your starred songs
     enqueue <search query> - enqueue first 20 elements of a search query"""
 
         if query.find("spotify:track") == 0:
@@ -241,6 +251,8 @@ playlists enqueue/play <item_name> - enqueue/play playlist/folder, you can enter
         elif query.find("similar:spotify:artist") == 0:
             query = ':'.join(query.split(':')[1:])
             ret = self.handler.getTracks("similar", query)
+        elif query.strip() == "starred":
+            ret = self.handler.getTracks("starred", "")
         elif query.find("spotify:") == 0 and query.find(":playlist:") != -1:
             ret = self.handler.getTracks("playlist", query)
         else:

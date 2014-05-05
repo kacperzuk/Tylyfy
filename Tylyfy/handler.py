@@ -254,6 +254,13 @@ class Handler(object):
             print(INFO+"Ambiguous query, multiple playlists match it"+RESET)
 
     @require_login
+    def setStarred(self, star):
+        try:
+            self.player.playlist[self.player.current].starred = bool(star)
+        except IndexError:
+            pass
+
+    @require_login
     def showPlaylists(self):
         c = self.spotify_session.playlist_container
         if not c.is_loaded:
@@ -370,7 +377,13 @@ class Handler(object):
             search = search.more()
             search.load()
             self.results.extend(list(search.tracks))
+        elif t == "starred":
+            playlist = self.spotify_session.get_starred()
+            playlist.load()
+            self.results = playlist.tracks
 
         for track in self.results:
             track.load()
+            if not track.availability == spotify.TrackAvailability.AVAILABLE:
+                self.results.remove(track)
 
