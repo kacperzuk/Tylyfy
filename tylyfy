@@ -136,15 +136,19 @@ If type isn't supplied it's assumed to be artist."""
         self.handler.player.play()
 
     def do_play(self, query):
-        """clear playlist and play object.
-    play <spotify:track:song_id> - play song
-    play <spotify:album:album_id> - play album
-    play <spotify:artist:artist_id> - play all albums of an artist
-    play <similar:spotify:artist:artist_id> - play all albums of similar artists
-    play playlist <playlist_name> - play your playlists (allows only partial match on name)
-    play <spotify:...:playlist:playlist_id> - play Spotify playlist
-    play starred - play your starred songs
-    play <search query> - play first 20 elements of a search query"""
+        """clear playlist and play object. Object can be:
+    <spotify:track:song_id> - play song
+    <spotify:album:album_id> - play album
+    <spotify:artist:artist_id> - play all tracks of an artist
+    <similar:spotify:artist:artist_id> - play all albums of similar artists
+    playlist <playlist_name> - play your playlists (allows only partial match on name)
+    <spotify:...:playlist:playlist_id> - play Spotify playlist
+    starred - play your starred songs
+    <search query> - play first 20 elements of a search query
+
+For example:
+    play spotify:artist:2nqa9iCkIKUPik9k84nEr4
+will play all tracks of an artist"""
         
         self.handler.player.clear()
         self.do_enqueue(query)
