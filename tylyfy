@@ -242,23 +242,6 @@ playlists enqueue/play <item_name> - enqueue/play playlist/folder, you can enter
     enqueue starred - enqueue your starred songs
     enqueue <search query> - enqueue first 20 elements of a search query"""
 
-        if query.find("spotify:track") == 0:
-            ret = self.handler.getTracks("track", query)
-        elif query.find("spotify:album") == 0:
-            ret = self.handler.getTracks("album", query)
-        elif query.find("spotify:artist") == 0:
-            ret = self.handler.getTracks("artist", query)
-        elif query.find("similar:spotify:artist") == 0:
-            query = ':'.join(query.split(':')[1:])
-            ret = self.handler.getTracks("similar", query)
-        elif query.strip() == "starred":
-            ret = self.handler.getTracks("starred", "")
-        elif query.find("spotify:") == 0 and query.find(":playlist:") != -1:
-            ret = self.handler.getTracks("playlist", query)
-        else:
-            ret = self.handler.getTracks("search", query)
-
-        if ret:
-            self.handler.enqueueResults()
+        self.handler.enqueue(query)
 
 Tylyfy().cmdloop()

@@ -64,19 +64,22 @@ class Player(object):
                 t = self.playlist[self.current]
                 self.player.load(t)
                 self.player.play()
-                self.scrobbler.update_now_playing(t.album.artist.name, t.name, t.album.name, int(t.duration/1000))
+                if self.scrobbler:
+                    self.scrobbler.update_now_playing(t.album.artist.name, t.name, t.album.name, int(t.duration/1000))
                 self.logger.debug("Playback started")
 
     def jump(self, n):
         n = n-1
         if n > 0 and n < len(self.playlist):
-            self.scrobbler.scrobble()
+            if self.scrobbler:
+                self.scrobbler.scrobble()
             self.player.unload()
             self.current = n
             t = self.playlist[self.current]
             self.player.load(t)
             self.player.play()
-            self.scrobbler.update_now_playing(t.album.artist.name, t.name, t.album.name, int(t.duration/1000))
+            if self.scrobbler:
+                self.scrobbler.update_now_playing(t.album.artist.name, t.name, t.album.name, int(t.duration/1000))
 
     def next(self, force=False):
         if self.scrobbler:

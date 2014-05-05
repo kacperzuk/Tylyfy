@@ -34,6 +34,7 @@ import os
 import textwrap
 import sys
 from Tylyfy.colors import *
+from Tylyfy.tracks import Tracks
 
 def require_login(f):
     def wrapper(*args):
@@ -108,7 +109,6 @@ class Handler(object):
             else:
                 print(ERROR+"pylast is missing, disabling LastFM scrobbling"+RESET)
         self.player = player.Player(self.spotify_session.player, self.scrobbler)
-        self.results = None
         self.last_search = None
 
     def setupLogging(self):
@@ -227,33 +227,6 @@ class Handler(object):
             self.last_search.type = t
 
     @require_login
-    def getTracksFromPlaylist(self, q):
-        c = self.spotify_session.playlist_container
-        if not c.is_loaded:
-            c.load()
-        result = None
-        for item in c:
-            if item.name.lower() == q.lower():
-                self.logger.debug("Direct hit on playlist")
-                result = item
-                break
-            elif not item.name.lower().find(q.lower()):
-                if result == None:
-                    self.logger.debug("Playlist candidate")
-                    result = item
-                else:
-                    self.logger.debug("Another candidate, allow only direct hit now")
-                    result = False
-        if result:
-            if not result.is_loaded:
-                result.load()
-            self.results = result.tracks
-            for track in self.results:
-                track.load()
-        elif result == False:
-            print(INFO+"Ambiguous query, multiple playlists match it"+RESET)
-
-    @require_login
     def setStarred(self, star):
         try:
             self.player.playlist[self.player.current].starred = bool(star)
@@ -321,7 +294,7 @@ class Handler(object):
             elif t == "album":
                 if self.last_search.albums:
                     for album in self.last_search.albums:
-                        print("%s<%s>%s %s%s by%s %s (%d)%s" % (LINK, album.link, ALBUM, album.name, SEPARATOR, ARTIST, album.artist.name, ALBUM, album.year, RESET))
+                        print("%s<%s>%s %s%s by%s %s %s(%s)%s" % (LINK, album.link, ALBUM, album.name, SEPARATOR, ARTIST, album.artist.name, ALBUM, album.year, RESET))
                 else:
                     print(ERROR+"No results."+RESET)
             else:
@@ -334,56 +307,9 @@ class Handler(object):
         self.loop.stop()
 
     @require_login
-    def enqueueResults(self):
-        if(self.results):
-            self.player.enqueue(self.results)
+    def enqueue(self, query):
+        tracks = Tracks(self.spotify_session, query)
+        if(tracks):
+            self.player.enqueue(tracks)
         else:
             print(ERROR+"No results."+RESET)
-        self.results = []
-
-    @require_login
-    def getTracks(self, t, query):
-        self.results = []
-        if t == "track":
-            track = self.spotify_session.get_track(query)
-            self.results = [ track ]
-        elif t == "album":
-            album = self.spotify_session.get_album(query)
-            browser = album.browse()
-            browser.load()
-            self.results = browser.tracks
-        elif t == "artist":
-            artist = self.spotify_session.get_artist(query)
-            browser = artist.browse()
-            browser.load()
-            self.results = browser.tracks
-        elif t == "similar":
-            artist = self.spotify_session.get_artist(query)
-            browser = artist.browse()
-            browser.load()
-            for sim in browser.similar_artists:
-                b = sim.browse()
-                b.load()
-                if(b.tracks):
-                    self.results.append(b.tracks[0])
-        elif t == "playlist":
-            playlist = self.spotify_session.get_playlist(query)
-            playlist.load()
-            self.results = playlist.tracks
-        elif t == "search":
-            search = self.spotify_session.search(query)
-            search.load()
-            self.results = list(search.tracks)
-            search = search.more()
-            search.load()
-            self.results.extend(list(search.tracks))
-        elif t == "starred":
-            playlist = self.spotify_session.get_starred()
-            playlist.load()
-            self.results = playlist.tracks
-
-        for track in self.results:
-            track.load()
-            if not track.availability == spotify.TrackAvailability.AVAILABLE:
-                self.results.remove(track)
-
