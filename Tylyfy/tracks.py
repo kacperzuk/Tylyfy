@@ -36,8 +36,8 @@ class Tracks(list):
                 if(b.tracks):
                     self.append(b.tracks[0])
         elif t == "playlist":
-            print(query.split(' ')[0])
             if query.split(' ')[0] == "playlist": # search user's playlist names
+                query = ' '.join(query.split(' ')[1:])
                 c = session.playlist_container
                 if not c.is_loaded:
                     c.load()

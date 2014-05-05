@@ -33,28 +33,27 @@ import spotify
 import cmd
 import sys, os
 
-class Prompt(object):
-    def __init__(self, player):
-        self.player = player
-
-    def __str__(self):
-        if not self.player.playing or self.player.current >= len(self.player.playlist) or self.player.current < 0:
-            return PROMPT+"tylyfy> "+RESET
-        t = self.player.playlist[self.player.current]
-        ret = "\n%sNow playing:%s %s%s by%s %s%s (%s)\n"% (PLAYED, TRACK, t.name, SEPARATOR, ARTIST, t.album.artist.name, ALBUM, t.album.name)
-        if not self.player.random:
-            ret += "%sTracks to the end of playlist: %d\n" % (TRACKS_TO_END, len(self.player.playlist)-self.player.current -1)
-        ret += "%stylyfy>%s " % (PROMPT, RESET)
-        return ret
 
 class Tylyfy(cmd.Cmd):
     doc_header = HEADING+'Available commands'+RESET
-    prompt = PROMPT+'tylyfy> '+RESET
+    prompt = RESET*len("tylyfy> ") # prevent deleting prompt
 
     def __init__(self):
         cmd.Cmd.__init__(self)
         self.handler = Handler()
-        self.prompt = Prompt(self.handler.player)
+        self.postcmd(False, '')
+
+    def postcmd(self, stop, line):
+        if not self.handler.player.playing or self.handler.player.current >= len(self.handler.player.playlist) or self.handler.player.current < 0:
+            sys.stdout.write(PROMPT+"tylyfy> "+RESET)
+            return stop
+        t = self.handler.player.playlist[self.handler.player.current]
+        ret = "\n%sNow playing:%s %s%s by%s %s%s (%s)\n"% (PLAYED, TRACK, t.name, SEPARATOR, ARTIST, t.album.artist.name, ALBUM, t.album.name)
+        if not self.handler.player.random:
+            ret += "%sTracks to the end of playlist: %d\n" % (TRACKS_TO_END, len(self.handler.player.playlist)-self.handler.player.current -1)
+        ret += "%stylyfy>%s " % (PROMPT, RESET)
+        sys.stdout.write(ret)
+        return stop
 
     def do_help(self, line):
         """List available commands with "help" or detailed help with "help cmd"."""
@@ -142,6 +141,7 @@ If type isn't supplied it's assumed to be artist."""
     play <spotify:album:album_id> - play album
     play <spotify:artist:artist_id> - play all albums of an artist
     play <similar:spotify:artist:artist_id> - play all albums of similar artists
+    play playlist <playlist_name> - play your playlists (allows only partial match on name)
     play <spotify:...:playlist:playlist_id> - play Spotify playlist
     play starred - play your starred songs
     play <search query> - play first 20 elements of a search query"""
@@ -213,34 +213,12 @@ star unset - unstar current song"""
             self.handler.setStarred(False)
 
     def do_playlists(self, query):
-        """show your playlists (also see help playlists)
-playlists enqueue/play <item_name> - enqueue/play playlist/folder, you can enter only part of the name"""
-        if not query:
-            self.handler.showPlaylists()
-        else:
-            query = query.split(' ')
-            action = query.pop(0)
-            ret = self.handler.getTracksFromPlaylist(' '.join(query))
-
-            if action == "play":
-                self.handler.player.clear()
-
-            if ret:
-                self.handler.enqueueResults()
-
-            if action == "play":
-                self.handler.player.next()
+        """show your playlists"""
+        self.handler.showPlaylists()
 
 
     def do_enqueue(self, query):
-        """add object to playlist (see help enqueue)
-    enqueue <spotify:track:song_id> - enqueue song
-    enqueue <spotify:album:album_id> - enqueue album
-    enqueue <spotify:artist:artist_id> - enqueue all albums of an artist
-    enqueue <similar:spotify:artist:artist_id> - enqueue all albums of similar artists
-    enqueue <spotify:...:playlist:playlist_id> - enqueue Spotify playlist
-    enqueue starred - enqueue your starred songs
-    enqueue <search query> - enqueue first 20 elements of a search query"""
+        """add object to playlist (see 'help play' for possible objects)"""
 
         self.handler.enqueue(query)
 
