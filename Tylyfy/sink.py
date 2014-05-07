@@ -31,8 +31,8 @@ import time
 from copy import copy
 
 class Sink(object):
-    pillow_size = 8 # bigger means smoother playback and bigger delays on state changes
-    def __init__(self, session):
+    def __init__(self, session, pillow_size):
+        self.pillow_size = pillow_size
         self.output = None
         session.on(spotify.SessionEvent.MUSIC_DELIVERY, self.music_delivery)
         self.lock = threading.Lock()

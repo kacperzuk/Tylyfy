@@ -157,8 +157,10 @@ class Handler(object):
                 except:
                     raise Exception("No pyAlsaAudio nor pyAudio found, bailing out...")
         else:
-            import sink
-            sink.Sink(session)
+            from Tylyfy import sink
+            print(INFO+"Enabling custom sink. If you get choppy sound or too long lag, change pillow_size in ~/.config/tylyfy/settings.ini."+RESET)
+            sink.Sink(session, int(self.settings.get("core", "pillo_size", "8")))
+            self.settings.sync()
         self.loop = spotify.EventLoop(session)
         self.loop.start()
         session.on(spotify.SessionEvent.CONNECTION_STATE_UPDATED, self.events.connection_state_updated)
