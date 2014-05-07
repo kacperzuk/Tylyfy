@@ -35,6 +35,7 @@ import textwrap
 import sys
 from Tylyfy.colors import *
 from Tylyfy.tracks import Tracks
+from Tylyfy.search import Search
 
 def require_login(f):
     def wrapper(*args):
@@ -215,18 +216,15 @@ class Handler(object):
         self.player.play()
 
     @require_login
-    def search(self, t, query):
-        self.last_search = self.spotify_session.search(query)
-        self.last_search.load()
-        self.last_search.type = t
+    def search(self, query):
+        self.last_search = Search(self.spotify_session, query)
+        self.last_search.printResults()        
 
     @require_login
     def more(self):
         if self.last_search:
-            t = self.last_search.type
-            self.last_search = self.last_search.more()
-            self.last_search.load()
-            self.last_search.type = t
+            self.last_search.more()
+            self.last_search.printResults()
 
     @require_login
     def setStarred(self, star):
@@ -270,37 +268,6 @@ class Handler(object):
                 print("%s%s\\------%s" % ("|--"*(in_folder), RULER, RESET))
                 in_folder -= 1
                 print("%s%s|%s" % (RULER, "|--"*(in_folder), RESET))
-
-    @require_login
-    def print_results(self):
-        if self.last_search:
-            t = self.last_search.type
-            if t == "artist":
-                if self.last_search.artists:
-                    for artist in self.last_search.artists:
-                        print("%s<%s>%s %s%s" % (LINK, artist.link, ARTIST, artist.name, RESET))
-                else:
-                    print(ERROR+"No results."+RESET)
-            elif t == "playlist":
-                if self.last_search.playlists:
-                    for playlist in self.last_search.playlists:
-                        print("%s<%s>%s %s%s" % (LINK, playlist.uri, PLAYLIST, playlist.name, RESET))
-                else:
-                    print(ERROR+"No results."+RESET)
-            elif t == "track":
-                if self.last_search.tracks:
-                    for track in self.last_search.tracks:
-                        print("%s<%s>%s %s%s by%s %s%s (from%s %s%s)%s" % (LINK, track.link, TRACK, track.name, SEPARATOR, ARTIST, track.album.artist.name, SEPARATOR, ALBUM, track.album.name, SEPARATOR, RESET))
-                else:
-                    print(ERROR+"No results."+RESET)
-            elif t == "album":
-                if self.last_search.albums:
-                    for album in self.last_search.albums:
-                        print("%s<%s>%s %s%s by%s %s %s(%s)%s" % (LINK, album.link, ALBUM, album.name, SEPARATOR, ARTIST, album.artist.name, ALBUM, album.year, RESET))
-                else:
-                    print(ERROR+"No results."+RESET)
-            else:
-                raise ValueError("Wrong search type")
 
     def quit(self):
         if self.events.connected.is_set():

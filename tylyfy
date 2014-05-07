@@ -104,20 +104,11 @@ Type can be:
     track
     album
 If type isn't supplied it's assumed to be artist."""
-        line = line.strip().split(' ')
-        t = line[0]
-        if t in ('artist', 'playlist', 'track', 'album'):
-            query = ' '.join(line[1:])
-        else:
-            t = 'artist'
-            query = ' '.join(line)
-        if self.handler.search(t, query):
-            self.handler.print_results()
+        self.handler.search(line)
 
     def do_more(self, line):
         """show more search results"""
-        if self.handler.more():
-            self.handler.print_results()
+        self.handler.more()
 
     def do_clear(self, q):
         """clear playlist"""
