@@ -159,7 +159,7 @@ class Handler(object):
         else:
             from Tylyfy import sink
             print(INFO+"Enabling custom sink. If you get choppy sound or too long lag, change pillow_size in ~/.config/tylyfy/settings.ini."+RESET)
-            sink.Sink(session, int(self.settings.get("core", "pillo_size", "8")))
+            sink.Sink(session, int(self.settings.get("core", "pillow_size", "8")))
             self.settings.sync()
         self.loop = spotify.EventLoop(session)
         self.loop.start()
