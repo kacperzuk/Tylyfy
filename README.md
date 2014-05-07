@@ -92,21 +92,21 @@ Unhashed password isn't needed anymore.
 ----------------------------------------
 
 - *core*
-  - *loglevel*: possible values debug, info, warning, error, critical
-    sets what messages will be printed
-  - *custom_sink* - possible values True, False
-    enables or disables custom sink (see Troubleshooting section)
-  - *pillow_size*: takes integer value, sets buffer size (used only with custom_sink)
+    - *loglevel*: possible values debug, info, warning, error, critical
+      sets what messages will be printed
+    - *custom_sink* - possible values True, False
+      enables or disables custom sink (see Troubleshooting section)
+    - *pillow_size*: takes integer value, sets buffer size (used only with custom_sink)
 - *spotify*
-  - *loglevel*: possible values debug, info, warning, error, critical
-    sets what messages will be printed
-  - *blob*: used internally, don't touch
-  - *username*: used internally, don't touch
+    - *loglevel*: possible values debug, info, warning, error, critical
+      sets what messages will be printed
+    - *blob*: used internally, don't touch
+    - *username*: used internally, don't touch
 - *lastfm*
-  - *username*: sets Last.fm username
-  - *custom_scrobbler*: possible values True, False
-    enables or disables custom scrobbler (see Troubleshooting section)
-  - *password*: sets Last.fm password (used only without custom_scrobbler)
-  - *password_md5*: sets password's MD5 hash (used only with custom_scrobbler)
-  - *api_key*: sets Last.fm API key (used only with custom_scrobbler)
-  - *secret_key*: sets Last.fm API secret key (used only with custom_scrobbler)
+    - *username*: sets Last.fm username
+    - *custom_scrobbler*: possible values True, False
+      enables or disables custom scrobbler (see Troubleshooting section)
+    - *password*: sets Last.fm password (used only without custom_scrobbler)
+    - *password_md5*: sets password's MD5 hash (used only with custom_scrobbler)
+    - *api_key*: sets Last.fm API key (used only with custom_scrobbler)
+    - *secret_key*: sets Last.fm API secret key (used only with custom_scrobbler)
