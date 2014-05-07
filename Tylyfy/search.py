@@ -35,6 +35,9 @@ class Search(object):
             elif self.type == "album":
                 if self.search.albums:
                     for album in self.search.albums:
-                        print("%s<%s>%s %s%s by%s %s %s(%s)%s" % (LINK, album.link, ALBUM, album.name, SEPARATOR, ARTIST, album.artist.name, ALBUM, album.year, RESET))
+                        if album.year > 0:
+                            print("%s<%s>%s %s%s by%s %s %s(%s)%s" % (LINK, album.link, ALBUM, album.name, SEPARATOR, ARTIST, album.artist.name, ALBUM, album.year, RESET))
+                        else:
+                            print("%s<%s>%s %s%s by%s %s %s" % (LINK, album.link, ALBUM, album.name, SEPARATOR, ARTIST, album.artist.name, RESET))
                 else:
                     print(ERROR+"No results."+RESET)
