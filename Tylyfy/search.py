@@ -5,7 +5,9 @@ class Search(object):
         self.type = query.split(' ')[0]
         if not self.type in ('artist', 'playlist', 'track', 'album'):
             self.type = 'artist'
-        self.search = session.search(' '.join(query.split(' ')[1:]))
+        else:
+            query = ' '.join(query.split(' ')[1:])
+        self.search = session.search(query)
         self.search.load()
 
     def more(self):
