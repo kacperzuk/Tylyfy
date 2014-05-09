@@ -44,15 +44,16 @@ class Tylyfy(cmd.Cmd):
         self.postcmd(False, '')
 
     def postcmd(self, stop, line):
-        if not self.handler.player.playing or self.handler.player.current >= len(self.handler.player.playlist) or self.handler.player.current < 0:
-            sys.stdout.write(PROMPT+"tylyfy> "+RESET)
-            return stop
-        t = self.handler.player.playlist[self.handler.player.current]
-        ret = "\n%sNow playing:%s %s%s by%s %s%s (%s)\n"% (PLAYED, TRACK, t.name, SEPARATOR, ARTIST, t.album.artist.name, ALBUM, t.album.name)
-        if not self.handler.player.random:
-            ret += "%sTracks to the end of playlist: %d\n" % (TRACKS_TO_END, len(self.handler.player.playlist)-self.handler.player.current -1)
-        ret += "%stylyfy>%s " % (PROMPT, RESET)
-        sys.stdout.write(ret)
+        if not stop:
+            if not self.handler.player.playing or self.handler.player.current >= len(self.handler.player.playlist) or self.handler.player.current < 0:
+                sys.stdout.write(PROMPT+"tylyfy> "+RESET)
+            else:
+                t = self.handler.player.playlist[self.handler.player.current]
+                ret = "\n%sNow playing:%s %s%s by%s %s%s (%s)\n"% (PLAYED, TRACK, t.name, SEPARATOR, ARTIST, t.album.artist.name, ALBUM, t.album.name)
+                if not self.handler.player.random:
+                    ret += "%sTracks to the end of playlist: %d\n" % (TRACKS_TO_END, len(self.handler.player.playlist)-self.handler.player.current -1)
+                ret += "%stylyfy>%s " % (PROMPT, RESET)
+                sys.stdout.write(ret)
         return stop
 
     def do_help(self, line):
@@ -84,7 +85,7 @@ class Tylyfy(cmd.Cmd):
                         print("%s" % (cmdname))
 
     def do_EOF(self, line):
-        """exit """
+        """press Ctrl-d to exit """
         self.handler.quit()
         return True
 
@@ -93,8 +94,11 @@ class Tylyfy(cmd.Cmd):
 
     def do_login(self, line):
         """login <username> <password> - password won't be stored, you only have to do this once"""
-        username, password = line.split(' ')
-        self.handler.login(username, password)
+        if len(line.split(' ') != 2):
+            self.do_help('login')
+        else:
+            username, password = line.split(' ')
+            self.handler.login(username, password)
 
     def do_search(self, line):
         """search <type> <query> - search for <type>.
@@ -104,7 +108,10 @@ Type can be:
     track
     album
 If type isn't supplied it's assumed to be artist."""
-        self.handler.search(line)
+        if not line.strip():
+            self.do_help('search')
+        else:
+            self.handler.search(line)
 
     def do_more(self, line):
         """show more search results"""
@@ -127,7 +134,8 @@ If type isn't supplied it's assumed to be artist."""
         self.handler.player.play()
 
     def do_play(self, query):
-        """clear playlist and play object. Object can be:
+        """clear playlist and play object. (see help play)
+Object can be:
     <spotify:track:song_id> - play song
     <spotify:album:album_id> - play album
     <spotify:artist:artist_id> - play all tracks of an artist
@@ -141,9 +149,12 @@ For example:
     play spotify:artist:2nqa9iCkIKUPik9k84nEr4
 will play all tracks of an artist"""
         
-        self.handler.player.clear()
-        self.do_enqueue(query)
-        self.handler.player.next()
+        if not query.strip():
+            self.do_help('play')
+        else:
+            self.handler.player.clear()
+            self.do_enqueue(query)
+            self.handler.player.next()
 
     def do_current(self, query):
         """Show current playlist and track"""
@@ -190,14 +201,20 @@ repeat one - toggle looping current track"""
 
     def do_jump(self, query):
         """jump <n> - jump to specific track on playlist"""
-        self.handler.player.jump(int(query))
+        if not query:
+            self.do_help('jump')
+        else:
+            self.handler.player.jump(int(query))
 
     def do_shell(self, query):
-        """exec(query)"""
-        try:
-            exec(query)
-        except Exception:
-            traceback.print_exc()
+        """!<code> - executes python code"""
+        if not query:
+            self.do_help('shell')
+        else:
+            try:
+                exec(query)
+            except Exception:
+                traceback.print_exc()
 
     def do_star(self, query):
         """star current song
@@ -215,6 +232,9 @@ star unset - unstar current song"""
     def do_enqueue(self, query):
         """add object to playlist (see 'help play' for possible objects)"""
 
-        self.handler.enqueue(query)
+        if not query:
+            self.do_help('enqueue')
+        else:
+            self.handler.enqueue(query)
 
 Tylyfy().cmdloop()
