@@ -27,6 +27,7 @@
 import spotify
 import logging
 import random
+from Tylyfy.colors import *
 
 class Player(object):
     def __init__(self, player, scrobbler=None):
@@ -41,9 +42,10 @@ class Player(object):
         self.scrobbler = scrobbler
 
     def enqueue(self, tracks):
-        if isinstance(tracks, spotify.Track):
-            tracks = [ tracks ]
-        self.playlist.extend(tracks)
+        if not self.playlist:
+            self.playlist = tracks
+        else:
+            self.playlist.extend(tracks)
         self.logger.debug("Current playlist: %s" % str(self.playlist))
 
     def clear(self):
@@ -103,6 +105,10 @@ class Player(object):
             t = self.playlist[self.current]
             if self.scrobbler:
                 self.scrobbler.update_now_playing(t.album.artist.name, t.name, t.album.name, int(t.duration/1000))
-            self.player.load(t)
-            self.player.play()
-            self.playing = True
+            if not t.availability == spotify.TrackAvailability.AVAILABLE:
+                print(ERROR+"Sorry, this track is unavailable."+RESET)
+                self.playing = False
+            else:
+                self.player.load(t)
+                self.player.play()
+                self.playing = True

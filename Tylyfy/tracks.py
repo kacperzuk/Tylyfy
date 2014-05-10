@@ -78,5 +78,17 @@ class Tracks(list):
 
         for track in self:
             track.load()
+
+        start = len(self)
+        i = 0
+        while i < len(self):
+            track = self[i]
             if not track.availability == spotify.TrackAvailability.AVAILABLE:
-                self.remove(track)
+                self.logger.debug("Removing track: %s - %s" % (track.album.artist.name, track.name))
+                del self[i]
+            else:
+                i += 1
+        self.logger.debug("Check done")
+        removed = start - len(self)
+        if not removed == 0:
+            print("%sIgnoring %d unavailable tracks.%s" % (ERROR, removed, RESET))

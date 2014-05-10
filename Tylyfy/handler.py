@@ -207,15 +207,6 @@ class Handler(object):
         self.player.next()
 
     @require_login
-    def playSong(self, song):
-        track = self.spotify_session.get_track(song)
-        track.load()
-        self.player.clear()
-        self.player.enqueue(track)
-        self.player.next()
-        self.player.play()
-
-    @require_login
     def search(self, query):
         self.last_search = Search(self.spotify_session, query)
         self.last_search.printResults()        
