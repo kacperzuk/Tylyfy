@@ -94,10 +94,12 @@ class Tylyfy(cmd.Cmd):
 
     def do_login(self, line):
         """login <username> <password> - password won't be stored, you only have to do this once"""
-        if len(line.split(' ') != 2):
+        if len(line.split(' ')) < 2:
             self.do_help('login')
         else:
-            username, password = line.split(' ')
+            line = line.split(' ')
+            username = line[0]
+            password = ' '.join(line[1:])
             self.handler.login(username, password)
 
     def do_search(self, line):
