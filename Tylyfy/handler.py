@@ -75,7 +75,7 @@ class Events(object):
             self.logger.debug("Scrobblers enabled")
 
     def logged_in(self, session, error):
-        if error == spotify.ErrorType.BAD_USERNAME_OR_PASSWORD:
+        if error:
             self.bad_login.set()
         self.login_event.set()
 
@@ -175,8 +175,16 @@ class Handler(object):
         if username:
             print("%sLogged in as: %s%s" % (INFO, username, RESET))
             session.login(username, blob=blob)
-            self.events.connected.wait()
-            self.logger.debug('Login and connection successful')
+            self.logger.debug("waiting for login event")
+            self.events.login_event.wait()
+            self.logger.debug(self.events.bad_login.is_set())
+            if self.events.bad_login.is_set():
+                print(ERROR+"Session expired, please login again"+RESET)
+                self.events.bad_login.clear()
+                self.events.login_event.clear()
+            else:
+                self.events.connected.wait()
+                self.logger.debug('Login and connection successful')
         else:
             print(NOTICE+"Remember to login"+RESET)
         return session
