@@ -72,7 +72,7 @@ class Player(object):
 
     def jump(self, n):
         n = n-1
-        if n > 0 and n < len(self.playlist):
+        if n >= 0 and n < len(self.playlist):
             if self.scrobbler:
                 self.scrobbler.scrobble()
             self.player.unload()
