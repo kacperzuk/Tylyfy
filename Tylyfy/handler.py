@@ -63,16 +63,26 @@ class Events(object):
             self.connected.set()
             self.logged_out_event.clear()
 
-            session.social.set_scrobbling(spotify.SocialProvider.SPOTIFY, spotify.ScrobblingState.LOCAL_ENABLED)
-            session.social.set_scrobbling(spotify.SocialProvider.FACEBOOK, spotify.ScrobblingState.LOCAL_ENABLED)
-            if not self.settings.get("lastfm", "custom_scrobbler", "True") == "True":
-                lastfm_user = self.settings.get("lastfm", "username", False)
-                if lastfm_user:
-                    session.social.set_social_credentials(spotify.SocialProvider.LASTFM, lastfm_user, self.settings.get("lastfm", "password", ""))
-                session.social.set_scrobbling(spotify.SocialProvider.LASTFM, spotify.ScrobblingState.LOCAL_ENABLED)
+            if self.settings.get("scrobbling", "spotify") == "False":
+                session.social.set_scrobbling(spotify.SocialProvider.SPOTIFY, spotify.ScrobblingState.LOCAL_DISABLED)
             else:
+                session.social.set_scrobbling(spotify.SocialProvider.SPOTIFY, spotify.ScrobblingState.LOCAL_ENABLED)
+
+            if self.settings.get("scrobbling", "facebook") == "False":
+                session.social.set_scrobbling(spotify.SocialProvider.FACEBOOK, spotify.ScrobblingState.LOCAL_DISABLED)
+            else:
+                session.social.set_scrobbling(spotify.SocialProvider.FACEBOOK, spotify.ScrobblingState.LOCAL_ENABLED)
+
+            if self.settings.get("scrobbling", "lastfm") == "False":
                 session.social.set_scrobbling(spotify.SocialProvider.LASTFM, spotify.ScrobblingState.LOCAL_DISABLED)
-            self.logger.debug("Scrobblers enabled")
+            else:
+                if not self.settings.get("lastfm", "custom_scrobbler", "True") == "True":
+                    lastfm_user = self.settings.get("lastfm", "username", False)
+                    if lastfm_user:
+                        session.social.set_social_credentials(spotify.SocialProvider.LASTFM, lastfm_user, self.settings.get("lastfm", "password", ""))
+                    session.social.set_scrobbling(spotify.SocialProvider.LASTFM, spotify.ScrobblingState.LOCAL_ENABLED)
+                else:
+                    session.social.set_scrobbling(spotify.SocialProvider.LASTFM, spotify.ScrobblingState.LOCAL_DISABLED)
 
     def logged_in(self, session, error):
         if error:
@@ -100,15 +110,16 @@ class Handler(object):
         self.events = Events(self.settings)
         self.spotify_session = self.setupSpotify()
         self.scrobbler = None
-        if self.settings.get("lastfm", "custom_scrobbler", "True") == "True":
-            if scrobble.working:
-                self.scrobbler = scrobble.Scrobbler(
-                        self.settings.get("lastfm", "api_key", ""),
-                        self.settings.get("lastfm", "secret_key", ""),
-                        self.settings.get("lastfm", "username", ""),
-                        self.settings.get("lastfm", "password_md5", ""))
-            else:
-                print(ERROR+"pylast is missing, disabling LastFM scrobbling"+RESET)
+        if not self.settings.get("scrobbling", "lastfm") == "False":
+            if self.settings.get("lastfm", "custom_scrobbler") == "True":
+                if scrobble.working:
+                    self.scrobbler = scrobble.Scrobbler(
+                            self.settings.get("lastfm", "api_key", ""),
+                            self.settings.get("lastfm", "secret_key", ""),
+                            self.settings.get("lastfm", "username", ""),
+                            self.settings.get("lastfm", "password_md5", ""))
+                else:
+                    print(ERROR+"pylast is missing, disabling LastFM scrobbling"+RESET)
         self.player = player.Player(self.spotify_session.player, self.scrobbler)
         self.last_search = None
 

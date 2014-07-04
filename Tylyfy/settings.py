@@ -43,6 +43,11 @@ class Settings(object):
                 "custom_scrobbler": "False",
                 "username": "",
                 "password": ""
+                },
+            "scrobbling": {
+                "facebook": "False",
+                "spotify": "False",
+                "lastfm": "False"
                 }
             }
     def __init__(self):

@@ -110,3 +110,10 @@ Unhashed password isn't needed anymore.
     - *password_md5*: sets password's MD5 hash (used only with custom_scrobbler)
     - *api_key*: sets Last.fm API key (used only with custom_scrobbler)
     - *secret_key*: sets Last.fm API secret key (used only with custom_scrobbler)
+- *scrobbling*:
+    - *facebook*: possible values True, False
+      enables or disables Facebook Scrobbling
+    - *spotify*: possible values True, False
+      enables or disables Spotify Scrobbling
+    - *lastfm*: possible values True, False
+      enables or disables Last.fm Scrobbling
