@@ -24,7 +24,7 @@ Requirements
 
 - [Python](http://python.org) (both 2 and 3 are supported)
 - [pyspotify](http://pyspotify.mopidy.com/en/latest/) >= 2.0.0
-- [alsaaudio](http://pyalsaaudio.sourceforge.net/) or [PyAudio](http://people.csail.mit.edu/hubert/pyaudio/)
+- [alsaaudio](http://pyalsaaudio.sourceforge.net/)
 
 #### Optional
 
@@ -66,13 +66,12 @@ Troubleshooting:
 
 If your sound is choppy and CPU usage is really high, try this:
 
-1. make sure you have [alsaaudio](http://pyalsaaudio.sourceforge.net/) installed
-2. edit `~/.config/tylyfy/settings.ini` and set `custom_sink` in `[core]` section to `True`:
+1. edit `~/.config/tylyfy/settings.ini` and set `custom_sink` in `[core]` section to `True`:
 ```
 [core]
 custom_sink = True
 ```
-3. If the sound is choppy, set `pillow_size` in `[core]` section to something bigger then the default 8. If the lag is too big, set it to something lower.
+3. If the sound is choppy, set `pillow_size` in `[core]` section to something bigger then the default `8`. If the lag is too big, set it to something lower.
 
 #### Scrobbling to Last.FM doesn't work
 If scrobbling to Last.FM doesn't work, try this:

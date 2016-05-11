@@ -2,16 +2,16 @@
 #
 # Copyright (c) 2014, Kacper Żuk
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
-# 
+#
 # 1. Redistributions of source code must retain the above copyright notice,
 # this list of conditions and the following disclaimer.  2. Redistributions in
 # binary form must reproduce the above copyright notice, this list of
 # conditions and the following disclaimer in the documentation and/or other
 # materials provided with the distribution.
-# 
+#
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 # AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 # IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -162,12 +162,9 @@ class Handler(object):
         session = spotify.Session(config=config)
         if str(self.settings.get('core', 'custom_sink', "False")) == "False":
             try:
-                spotify.PortAudioSink(session)
+                spotify.AlsaSink(session)
             except:
-                try:
-                    spotify.AlsaSink(session)
-                except:
-                    print(ERROR+"No pyAlsaAudio nor pyAudio found, sound disabled..."+RESET)
+                print(ERROR+"No pyAlsaAudio found, sound disabled..."+RESET)
         else:
             from Tylyfy import sink
             print(INFO+"Enabling custom sink. If you get choppy sound or too long lag, change pillow_size in ~/.config/tylyfy/settings.ini."+RESET)
@@ -228,7 +225,7 @@ class Handler(object):
     @require_login
     def search(self, query):
         self.last_search = Search(self.spotify_session, query)
-        self.last_search.printResults()        
+        self.last_search.printResults()
 
     @require_login
     def more(self):
@@ -248,7 +245,7 @@ class Handler(object):
         c = self.spotify_session.playlist_container
         if not c.is_loaded:
             c.load()
-        
+
         in_folder = 0
         if len(c) > 0:
             print(HEADING+"Your playlists:"+RESET)
