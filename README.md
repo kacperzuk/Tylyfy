@@ -9,10 +9,6 @@ Tylyfy is a simple CLI-based Spotify player for Premium users.
 Instalation
 -----------
 
-#### Packages
-
-- [ArchLinux](https://aur.archlinux.org/packages/tylyfy-git/)
-
 #### Manual installation
 
 - install [setuptools](https://pypi.python.org/pypi/setuptools)
