@@ -3,16 +3,16 @@
 #
 # Copyright (c) 2014, Kacper Żuk
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
-# 
+#
 # 1. Redistributions of source code must retain the above copyright notice,
 # this list of conditions and the following disclaimer.  2. Redistributions in
 # binary form must reproduce the above copyright notice, this list of
 # conditions and the following disclaimer in the documentation and/or other
 # materials provided with the distribution.
-# 
+#
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 # AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 # IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -40,20 +40,23 @@ class Tylyfy(cmd.Cmd):
 
     def __init__(self):
         cmd.Cmd.__init__(self)
-        self.handler = Handler()
+        self.handler = Handler(self._print_now_playing)
         self.postcmd(False, '')
+
+    def _print_now_playing(self):
+        t = self.handler.player.playlist[self.handler.player.current]
+        ret = "\n%sNow playing:%s %s%s by%s %s%s (%s)\n"% (PLAYED, TRACK, t.name, SEPARATOR, ARTIST, t.album.artist.name, ALBUM, t.album.name)
+        if not self.handler.player.random:
+            ret += "%sTracks to the end of playlist: %d\n" % (TRACKS_TO_END, len(self.handler.player.playlist)-self.handler.player.current -1)
+        ret += "%stylyfy>%s " % (PROMPT, RESET)
+        sys.stdout.write(ret)
 
     def postcmd(self, stop, line):
         if not stop:
             if not self.handler.player.playing or self.handler.player.current >= len(self.handler.player.playlist) or self.handler.player.current < 0:
                 sys.stdout.write(PROMPT+"tylyfy> "+RESET)
             else:
-                t = self.handler.player.playlist[self.handler.player.current]
-                ret = "\n%sNow playing:%s %s%s by%s %s%s (%s)\n"% (PLAYED, TRACK, t.name, SEPARATOR, ARTIST, t.album.artist.name, ALBUM, t.album.name)
-                if not self.handler.player.random:
-                    ret += "%sTracks to the end of playlist: %d\n" % (TRACKS_TO_END, len(self.handler.player.playlist)-self.handler.player.current -1)
-                ret += "%stylyfy>%s " % (PROMPT, RESET)
-                sys.stdout.write(ret)
+                self._print_now_playing()
         return stop
 
     def do_help(self, line):
@@ -150,7 +153,7 @@ Object can be:
 For example:
     play spotify:artist:2nqa9iCkIKUPik9k84nEr4
 will play all tracks of an artist"""
-        
+
         if not query.strip():
             self.do_help('play')
         else:

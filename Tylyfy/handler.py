@@ -104,7 +104,9 @@ class Events(object):
         print("%sScrobble error: %s%s" % (ERROR, str(error), RESET))
 
 class Handler(object):
-    def __init__(self):
+    def __init__(self, notifyNowPlaying):
+        self._notifyNowPlaying = notifyNowPlaying
+
         self.settings = settings.Settings()
         self.logger = self.setupLogging()
         self.events = Events(self.settings)
@@ -221,6 +223,7 @@ class Handler(object):
     def endOfTrack(self, session):
         self.logger.debug("Track end")
         self.player.next()
+        self._notifyNowPlaying()
 
     @require_login
     def search(self, query):

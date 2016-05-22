@@ -2,16 +2,16 @@
 #
 # Copyright (c) 2014, Kacper Żuk
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
-# 
+#
 # 1. Redistributions of source code must retain the above copyright notice,
 # this list of conditions and the following disclaimer.  2. Redistributions in
 # binary form must reproduce the above copyright notice, this list of
 # conditions and the following disclaimer in the documentation and/or other
 # materials provided with the distribution.
-# 
+#
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 # AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 # IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -84,11 +84,11 @@ class Player(object):
             if self.scrobbler:
                 self.scrobbler.update_now_playing(t.album.artist.name, t.name, t.album.name, int(t.duration/1000))
 
-    def next(self, force=False):
+    def next(self, user_inited=False):
         if self.scrobbler:
             self.scrobbler.scrobble()
         self.player.unload()
-        if force or not self.loop_one or self.current == -1:
+        if user_inited or not self.loop_one or self.current == -1:
             if self.random:
                 old = self.current
                 while old == self.current:
